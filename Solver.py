@@ -8,7 +8,7 @@ filename = 'CO_Case2401.txt'
 
 # create instance for this case and read file
 case = Instance.Instance()
-case.read_file(filename)
+case.read_case_file(filename)
 
 # find possible daily routes given trucks, locations, requests
 routes = []

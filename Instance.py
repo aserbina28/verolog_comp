@@ -22,11 +22,13 @@ class Instance(object):
         self.numTechnicians = None
         self.technicians = [['id', 'location_id', 'max_distance', 'max_installations', 'installation_ability']]
 
-    def read_file(self, filename):
+    def read_case_file(self, filename):
+        # open file, read line by line
         file = open(filename)
         while file.readable:
             line = file.readline().strip()
-            if len(line) != 0:
+            if len(line) != 0: 
+                # read constants and assign to variables
                 var, value = line.split(' = ')
                 if var == 'DATASET':
                     self.dataset = value
@@ -52,6 +54,7 @@ class Instance(object):
                     self.technicianDayCost = int(value)
                 elif var == 'TECHNICIAN_COST':
                     self.technicianCost = int(value)
+                # create 2d lists for machines, locations, reqests, technicians 
                 elif var == 'MACHINES':
                     numMachines = int(value)
                     for i in range(numMachines):
