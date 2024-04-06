@@ -25,8 +25,8 @@ class Instance(object):
     def read_case_file(self, filename):
         # open file, read line by line
         file = open(filename)
-        while file.readable:
-            line = file.readline().strip()
+        for line in file:
+            line = line.strip()
             if len(line) != 0: 
                 # read constants and assign to variables
                 var, value = line.split(' = ')
@@ -56,27 +56,27 @@ class Instance(object):
                     self.technicianCost = int(value)
                 # create 2d lists for machines, locations, reqests, technicians 
                 elif var == 'MACHINES':
-                    numMachines = int(value)
-                    for i in range(numMachines):
+                    self.numMachines = int(value)
+                    for i in range(self.numMachines):
                         self.machines.append([])
                         row = file.readline().strip().split()
                         for j in row:
                             self.machines[i+1].append(int(j))
                 elif var == 'LOCATIONS':
-                    numLocations = int(value)
-                    for i in range(numLocations):
+                    self.numLocations = int(value)
+                    for i in range(self.numLocations):
                         self.locations.append([])
                         for j in file.readline().strip().split():
                             self.locations[i+1].append(int(j))
                 elif var == 'REQUESTS':
-                    numRequests = int(value)
-                    for i in range(numRequests):
+                    self.numRequests = int(value)
+                    for i in range(self.numRequests):
                         self.requests.append([])
                         for j in file.readline().strip().split():
                             self.requests[i+1].append(int(j))
                 elif var == 'TECHNICIANS':
-                    numTechnicians = int(value)
-                    for i in range(numTechnicians):
+                    self.numTechnicians = int(value)
+                    for i in range(self.numTechnicians):
                         self.technicians.append([])
                         for j in file.readline().strip().split():
                             self.technicians[i+1].append(int(j))
