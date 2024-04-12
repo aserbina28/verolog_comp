@@ -9,4 +9,4 @@ filename = 'instances_2024/CO_Case2401.txt'
 # create instance for this case and read file
 case = Instance.Instance()
 case.read_case_file(filename)
-
+#hi
