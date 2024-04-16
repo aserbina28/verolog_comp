@@ -4,12 +4,14 @@ import Instance
 
 
 # pass in file name of instance (hard code or command line)
-filename = 'instances_2024/CO_Case2401.txt' 
+filename = 'instances_2024/CO_Case2404.txt' 
 # filename = sys.argv[1]
 
 # create "instance" and read file
 instance = Instance.Instance()
 instance.read_case_file(filename)
+
+#TODO make tours and schedules more strategic  
 
 # tours (start with making tours only one or two machine requests)
 tours = [["tours"]]
@@ -20,7 +22,9 @@ for t in range(1, instance.numRequests+1):
 
 # schedule (allow everything for now)
 schedule = [["schedule"]]
-schedule.append([1,2,3,4,5])
+schedule.append([1])
+for i in range(2, instance.days+1):
+    schedule[1].append(i)
 
 # function to solve IP for technicians
 def IP_Technicians():
@@ -118,19 +122,22 @@ def IP_Technicians():
         for d in range(1, instance.days+1):
             model.addConstr(quicksum(b[t,m]*y[p,t,d] for t in range(1, len(tours)) for p in range(1, instance.numTechnicians+1)) <=l[m,d])
 
-    #TODO add constrain about techncians abilitiesmax requests/ max distance
+    #TODO add constraints about techncians abilities/ max requests/ max distance
 
-    model.setParam( 'OutputFlag', False )
+    model.setParam('OutputFlag', False)
     model.optimize()
 
-    # create list to store y variable values 
+     # create list to store y variable values 
     solutions = [["technician", "tour", "day"]] 
-    
-    #parse decision vars and add to list
-    for v in model.getVars():
-        if v.X > 0 and 'y' in v.varName:
-            y,p,t,d = v.varName.split('_')
-            solutions.append([p, tours[int(t)], d])
+
+    if model.SolCount == 0:
+        print("***NO SOLUTION FOUND***")
+    else:
+        #parse decision vars and add to list
+        for v in model.getVars():
+            if v.X > 0 and 'y' in v.varName:
+                y,p,t,d = v.varName.split('_')
+                solutions.append([p, tours[int(t)], d])
     
     return solutions
 
