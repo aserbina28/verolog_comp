@@ -4,13 +4,14 @@ import Instance
 
 
 # pass in file name of instance (hard code or command line)
-filename = 'instances_2024/CO_Case2420.txt' 
+filename = 'instances_2024/CO_Case2404.txt' 
 # filename = sys.argv[1]
 
 # create "instance" and read file
 instance = Instance.Instance()
 instance.read_case_file(filename)
 
+print(instance.technicians[1][4])
 #TODO make tours and schedules more strategic  
 
 # tours (start with making tours only one or two machine requests)
@@ -81,10 +82,21 @@ def IP_Technicians():
 
     # decision var person p performs tour t on day d
     y = {}
-    for p in range(1, instance.numTechnicians+1):
+    for p in range(1, instance.numTechnicians + 1):
         for t in range(1, len(tours)):
-            for d in range(1, instance.days+1):
-                y[p,t,d] = model.addVar(0, 1, 0, GRB.BINARY, "y_%d_%d_%d" %(p,t,d))
+            for d in range(1, instance.days + 1):
+                # Check if the tour distance is within the technician's limit
+                if tech_tour_distance(t, p) <= instance.technicians[p][2]:
+                    print(tours[t])
+                    # Check if the technician can install all machines in the tour
+                    if all(instance.technicians[p][m+3] for m in tours[t]):
+                        y[p, t, d] = model.addVar(0, 1, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))
+                    else:
+                        y[p, t, d] = 0  # Set the decision variable to 0 if technician cannot install all machines
+                else:
+                    y[p, t, d] = 0  # Set the decision variable to 0 if the distance exceeds the limit
+
+
     
     # decision var person p has schedule s
     z = {}
@@ -122,12 +134,6 @@ def IP_Technicians():
         for d in range(1, instance.days+1):
             model.addConstr(quicksum(b[t,m]*y[p,t,d] for t in range(1, len(tours)) for p in range(1, instance.numTechnicians+1)) <=l[m,d])
 
-    #constraint for max distance for a technician 
-    for p in range(1, instance.numTechnicians + 1):
-        for t in range(1, len(tours)):
-            for d in range(1, instance.days + 1):
-                model.addConstr(tech_tour_distance(t,p) <= instance.technicians[p][2])
-    
     #constraint for max requests for a technician
     for p in range(1, instance.numTechnicians + 1):
         for t in range(1, len(tours)):
