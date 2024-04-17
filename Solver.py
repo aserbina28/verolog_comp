@@ -1,4 +1,4 @@
-import numpy as np
+pyimport numpy as np
 from gurobipy import *
 import Instance
 
@@ -122,6 +122,18 @@ def IP_Technicians():
         for d in range(1, instance.days+1):
             model.addConstr(quicksum(b[t,m]*y[p,t,d] for t in range(1, len(tours)) for p in range(1, instance.numTechnicians+1)) <=l[m,d])
 
+    #constraint for max distance for a technician 
+    for p in range(1, instance.numTechnicians + 1):
+        for t in range(1, len(tours)):
+            for d in range(1, instance.days + 1):
+                model.addConstr(tech_tour_distance(t,p) <= instance.technicians[p][2])
+    
+    #constraint for max requests for a technician
+    for p in range(1, instance.numTechnicians + 1):
+        for t in range(1, len(tours)):
+            for d in range(1, instance.days + 1):
+                model.addConstr(quicksum(b[t, m] * y[p, t, d] for m in tours[t]) <= instance.technicians[p][3])
+
     #TODO add constraints about techncians abilities/ max requests/ max distance
 
     model.setParam('OutputFlag', False)
@@ -148,6 +160,20 @@ def distance(location1, location2):
     y2 = instance.locations[location2][2]
     return np.sqrt((x1-x2)**2 + (y1-y2)**2)
 
+#length of tour t performed by technician p
+def tech_tour_distance(t, p):
+    dist = 0
+    technicianLocationID = instance.technicians[p][1]
+    tourLocationIDs = []
+    for m in tours[t]:
+        tourLocationIDs.append(instance.requests[m][1])
+    # add the $/unit of distance from technician start to first request 1
+    dist += distance(technicianLocationID, tourLocationIDs[0]) 
+    for i in range(1, len(tourLocationIDs)-1):
+        dist += distance(tourLocationIDs[i-1], tourLocationIDs[i])
+            # add distance of techncian going back to their starting place
+    dist += distance(tourLocationIDs[len(tourLocationIDs)-1], technicianLocationID)    
+    return dist
 
 # call techncian function
 technician_solutions = IP_Technicians()
