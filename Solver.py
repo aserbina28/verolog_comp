@@ -16,9 +16,9 @@ print(instance.technicians[1][4])
 
 # tours (start with making tours only one or two machine requests)
 tours = [["tours"]]
-for t in range(1, instance.numRequests+1):
+for t in range(1, instance.numMachines+1):
     tours.append([t])
-    for t2 in range(t, instance.numRequests+1):
+    for t2 in range(t, instance.numMachines+1):
         tours.append([t, t2])
 
 # schedule (allow everything for now)
@@ -89,7 +89,7 @@ def IP_Technicians():
                 if tech_tour_distance(t, p) <= instance.technicians[p][2]:
                     print(tours[t])
                     # Check if the technician can install all machines in the tour
-                    if all(instance.technicians[p][m+3] for m in tours[t]):
+                    if all(instance.technicians[p][m+3] for m in tours[t]): #need to fix this -- not sure how tours work
                         y[p, t, d] = model.addVar(0, 1, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))
                     else:
                         y[p, t, d] = 0  # Set the decision variable to 0 if technician cannot install all machines
