@@ -1,10 +1,10 @@
-pyimport numpy as np
+import numpy as np
 from gurobipy import *
 import Instance
 
 
 # pass in file name of instance (hard code or command line)
-filename = 'instances_2024/CO_Case2404.txt' 
+filename = 'instances_2024/CO_Case2420.txt' 
 # filename = sys.argv[1]
 
 # create "instance" and read file
