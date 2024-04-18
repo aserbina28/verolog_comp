@@ -11,15 +11,20 @@ filename = 'instances_2024/CO_Case2404.txt'
 instance = Instance.Instance()
 instance.read_case_file(filename)
 
-print(instance.technicians[1][4])
 #TODO make tours and schedules more strategic  
 
 # tours (start with making tours only one or two machine requests)
 tours = [["tours"]]
-for t in range(1, instance.numMachines+1):
+machines_on_tour = [["machines requested"]]
+for t in range(1, instance.numRequests+1):
     tours.append([t])
-    for t2 in range(t, instance.numMachines+1):
+    # machine type requested, add to list of machine types
+    machine_type_1 = instance.requests[t][4]
+    machines_on_tour.append([machine_type_1])
+    for t2 in range(t, instance.numRequests+1):
         tours.append([t, t2])
+        machine_type_2 = instance.requests[t2][4]
+        machines_on_tour.append([machine_type_1, machine_type_2])
 
 # schedule (allow everything for now)
 schedule = [["schedule"]]
@@ -87,14 +92,13 @@ def IP_Technicians():
             for d in range(1, instance.days + 1):
                 # Check if the tour distance is within the technician's limit
                 if tech_tour_distance(t, p) <= instance.technicians[p][2]:
-                    print(tours[t])
                     # Check if the technician can install all machines in the tour
-                    if all(instance.technicians[p][m+3] for m in tours[t]): #need to fix this -- not sure how tours work
+                    if all(instance.technicians[p][m+3] for m in machines_on_tour[t]): #need to fix this -- not sure how tours work
                         y[p, t, d] = model.addVar(0, 1, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))
                     else:
-                        y[p, t, d] = 0  # Set the decision variable to 0 if technician cannot install all machines
+                        y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))  # Set the decision variable to 0 if technician cannot install all machines
                 else:
-                    y[p, t, d] = 0  # Set the decision variable to 0 if the distance exceeds the limit
+                    y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))  # Set the decision variable to 0 if the distance exceeds the limit
 
 
     
@@ -140,7 +144,6 @@ def IP_Technicians():
             for d in range(1, instance.days + 1):
                 model.addConstr(quicksum(b[t, m] * y[p, t, d] for m in tours[t]) <= instance.technicians[p][3])
 
-    #TODO add constraints about techncians abilities/ max requests/ max distance
 
     model.setParam('OutputFlag', False)
     model.optimize()
@@ -173,7 +176,7 @@ def tech_tour_distance(t, p):
     tourLocationIDs = []
     for m in tours[t]:
         tourLocationIDs.append(instance.requests[m][1])
-    # add the $/unit of distance from technician start to first request 1
+    # add the distance from technician start to first request 1
     dist += distance(technicianLocationID, tourLocationIDs[0]) 
     for i in range(1, len(tourLocationIDs)-1):
         dist += distance(tourLocationIDs[i-1], tourLocationIDs[i])
