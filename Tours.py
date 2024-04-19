@@ -1,3 +1,5 @@
+# this is a unfinished! working on a strategy to create list of tours
+
 import Instance
 import numpy as np
 

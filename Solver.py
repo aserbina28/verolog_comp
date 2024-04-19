@@ -4,14 +4,14 @@ import Instance
 
 
 # pass in file name of instance (hard code or command line)
-filename = 'instances_2024/CO_Case2404.txt' 
+filename = 'instances_2024/CO_Case2420.txt' 
 # filename = sys.argv[1]
 
 # create "instance" and read file
 instance = Instance.Instance()
 instance.read_case_file(filename)
 
-#TODO make tours and schedules more strategic  
+#TODO make tours more strategic  
 
 # tours (start with making tours only one or two machine requests)
 tours = [["tours"]]
@@ -22,15 +22,27 @@ for t in range(1, instance.numRequests+1):
     machine_type_1 = instance.requests[t][4]
     machines_on_tour.append([machine_type_1])
     for t2 in range(t, instance.numRequests+1):
-        tours.append([t, t2])
-        machine_type_2 = instance.requests[t2][4]
-        machines_on_tour.append([machine_type_1, machine_type_2])
+        if t != t2:
+            tours.append([t, t2])
+            machine_type_2 = instance.requests[t2][4]
+            machines_on_tour.append([machine_type_1, machine_type_2])
 
-# schedule (allow everything for now)
+# schedule 
 schedule = [["schedule"]]
-schedule.append([1])
-for i in range(2, instance.days+1):
-    schedule[1].append(i)
+# give 1 day off for 4 days worked
+for i in range(0,5):
+    schedule.append([])
+    for j in range(1, instance.days+1):
+        if j % 5 - i != 0:
+            schedule[i+1].append(j)
+start = len(schedule)
+# give 2 days off for 5 days worked
+for i in range(0,7):
+    schedule.append([])
+    for j in range(1, instance.days+1):
+        if j % 7 != i and j % 7 != i+1:
+            schedule[start+i].append(j)
+        
 
 # function to solve IP for technicians
 def IP_Technicians():
@@ -131,7 +143,7 @@ def IP_Technicians():
     # constraint every machine gets installed
     for m in range(1, instance.numRequests+1):
         model.addConstr(quicksum(b[t,m]*y[p,t,d] for t in range(1, len(tours)) for p in range(1, instance.numTechnicians+1) \
-                    for d in range(1, instance.days+1)) >= 1)
+                    for d in range(1, instance.days+1)) == 1) # exactly equal means can't go to request twice
 
     # constraint machines can't be installed until after the request is released
     for m in range(1, instance.numRequests+1):
