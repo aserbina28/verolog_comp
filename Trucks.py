@@ -34,40 +34,48 @@ def request_size(instance):
         request_sizes[request[0]] = size
     return request_sizes
 
+distances = instance_distance(instance)
 
 def Truck_MIP(instance):
-    distances = instance_distance(instance)
-    request_sizes = request_size(instance)
 
     model = Model('Truck_MIP')
 
+    # Decision Variables
     x = model.addVars(instance.numLocations, instance.numLocations, instance.numRequests, instance.days,vtype=GRB.BINARY, name="x")
     y = model.addVars(instance.numRequests, instance.days, vtype=GRB.BINARY, name="y")
     u = model.addVars(instance.numLocations, instance.numRequests, instance.days, vtype=GRB.CONTINUOUS,name="u")
 
-    model.setObjective(
-        quicksum(
-            instance.truckDayCost * y[k, d] +
-            instance.truckDistanceCost * x[i, j, k, d] * distances[(i, j)]
-            for i in range(1,instance.numLocations+1)
-            for j in range(1,instance.numLocations+1)
-            for k in range(1,instance.numRequests+1)
+    # Objective
+    model.setObjective(quicksum(instance.truckDayCost * y[k, d] + instance.truckDistanceCost * x[i, j, k, d] * distances[(i,j)]
+            for i in range(1,instance.numLocations)
+            for j in range(1,instance.numLocations)
+            for k in range(1,instance.numRequests)
             for d in range(1,instance.days)), GRB.MINIMIZE
     )
 
-    model.addConstrs(
-        (u[i, k, d] <= instance.truckCapacity for i in range(1,instance.numLocations+1) for k in range(1,instance.requests+1) for d
-         in range(instance.days)), name="capacity")
 
-    model.addConstrs((quicksum(x[i, j, k, d] for j in range(1,instance.numLocations+1) if i != j) == 1
-                      for i in range(1,instance.numLocations+1)
-                      for k in range(1,instance.numRequests+1)
+    model.addConstrs((u[i, k, d] <= instance.truckCapacity
+                      for i in range(1,instance.numLocations)
+                      for k in range(1,instance.numRequests)
+                      for d in range(instance.days)), name="capacity")
+
+    model.addConstrs((quicksum(x[i, j, k, d] for j in range(1,instance.numLocations) if i != j) == 1
+                      for i in range(1,instance.numLocations)
+                      for k in range(1,instance.numRequests)
                       for d in range(1,instance.days)), name="routing")
 
     model.addConstrs((u[i, k, d] >= instance.machines[instance.requests[k][4]][1] * instance.requests[k][5]
-                      for i in range(1,instance.numLocations+1)
-                      for k in range(1,instance.numRequests+1)
+                      for i in range(1,instance.numLocations)
+                      for k in range(1,instance.numRequests)
                       for d in range(1,instance.days)), name="load")
+
+    model.addConstrs((quicksum(x[i, j, k, d]
+                        for k in range(1, instance.numRequests)
+                        for d in range(1, instance.days)
+                        for j in range(1, instance.numLocations)) == 1
+                        for i in range(1, instance.numRequests)), name="serve_once")
+
+    # matrix constraint technitian output
 
     model.optimize()
 
@@ -93,7 +101,7 @@ def print_routes_and_costs(model, instance, x, y):
                 for j in range(instance.numLocations):
                     if i != j and x[i, j, k, d].x > 0.5:
                         route.append((i, j))
-                        route_cost += instance.truckDistanceCost * instance.distance[(i, j)]
+                        route_cost += instance.truckDistanceCost * distances[(i,j)]
 
             if route:
                 print(f"    Route: {route}")
