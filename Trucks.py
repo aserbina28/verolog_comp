@@ -1,3 +1,4 @@
+# Trucks.py is unfinished & does not work
 from gurobipy import *
 from pyexpat import model
 
@@ -41,41 +42,52 @@ def Truck_MIP(instance):
     model = Model('Truck_MIP')
 
     # Decision Variables
-    x = model.addVars(instance.numLocations, instance.numLocations, instance.numRequests, instance.days,vtype=GRB.BINARY, name="x")
+    # decision var truck k goes from i to request j on day d
+    x = model.addVars(instance.numRequests, instance.numRequests, instance.numRequests, instance.days, vtype=GRB.BINARY, name="x")
+    # decision var if truck k used on day d
     y = model.addVars(instance.numRequests, instance.days, vtype=GRB.BINARY, name="y")
-    u = model.addVars(instance.numLocations, instance.numRequests, instance.days, vtype=GRB.CONTINUOUS,name="u")
+    # decision var continuous 
+    # u = model.addVars(instance.numRequests, instance.numRequests, instance.days, vtype=GRB.CONTINUOUS,name="u")
+
+    # decision var
+    
 
     # Objective
-    model.setObjective(quicksum(instance.truckDayCost * y[k, d] + instance.truckDistanceCost * x[i, j, k, d] * distances[(i,j)]
-            for i in range(1,instance.numLocations)
-            for j in range(1,instance.numLocations)
+    model.setObjective(quicksum(instance.truckDayCost * y[k, d] + instance.truckDistanceCost * x[i, j, k, d] * distances[(instance.requests[i][2],instance.requests[j][2])]
+            for i in range(1,instance.numRequests)
+            for j in range(1,instance.numRequests)
             for k in range(1,instance.numRequests)
             for d in range(1,instance.days)), GRB.MINIMIZE
     )
 
-
+    # capacity constraint (after truck visits i, capcaity cannot increase past max)
     model.addConstrs((u[i, k, d] <= instance.truckCapacity
-                      for i in range(1,instance.numLocations)
+                      for i in range(1,instance.numRequests)
                       for k in range(1,instance.numRequests)
                       for d in range(instance.days)), name="capacity")
-
-    model.addConstrs((quicksum(x[i, j, k, d] for j in range(1,instance.numLocations) if i != j) == 1
-                      for i in range(1,instance.numLocations)
-                      for k in range(1,instance.numRequests)
-                      for d in range(1,instance.days)), name="routing")
-
+    
+    # capcaity constraint part 2
     model.addConstrs((u[i, k, d] >= instance.machines[instance.requests[k][4]][1] * instance.requests[k][5]
-                      for i in range(1,instance.numLocations)
+                      for i in range(1,instance.numRequests)
                       for k in range(1,instance.numRequests)
                       for d in range(1,instance.days)), name="load")
 
+    # constraint trucks can only go from i to one location j on a given day
+    model.addConstrs((quicksum(x[i, j, k, d] for j in range(1,instance.numRequests) if i != j) == 1 # maybe <= ?
+                      for i in range(1,instance.numRequests)
+                      for k in range(1,instance.numRequests)
+                      for d in range(1,instance.days)), name="routing")
+
+    # constraint that every request is served (not working)
     model.addConstrs((quicksum(x[i, j, k, d]
                         for k in range(1, instance.numRequests)
                         for d in range(1, instance.days)
-                        for j in range(1, instance.numLocations)) == 1
+                        for j in range(1, instance.numRequests)) == 1
                         for i in range(1, instance.numRequests)), name="serve_once")
 
     # matrix constraint technitian output
+
+    # constraint for request release and end dates
 
     model.optimize()
 

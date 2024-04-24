@@ -1,203 +1,61 @@
-import numpy as np
+# Solver.py runs the IP and creates an output file
 from gurobipy import *
 import Instance
+import Trucks2
+import Technicians
 
 
 # pass in file name of instance (hard code or command line)
-filename = 'instances_2024/CO_Case2420.txt' 
+filename = 'instances_2024/CO_Case2402.txt' 
 # filename = sys.argv[1]
 
 # create "instance" and read file
 instance = Instance.Instance()
 instance.read_case_file(filename)
+      
+# solve technician problem
+technician_solutions, machines = Technicians.IP_Technicians(instance)
 
-#TODO make tours more strategic  
+# solve truck problem
+route_days, truck_days = Trucks2.IP_Trucks(instance, machines)
+route_days[1:] = sorted(route_days[1:])
 
-# tours (start with making tours only one or two machine requests)
-tours = [["tours"]]
-machines_on_tour = [["machines requested"]]
-for t in range(1, instance.numRequests+1):
-    tours.append([t])
-    # machine type requested, add to list of machine types
-    machine_type_1 = instance.requests[t][4]
-    machines_on_tour.append([machine_type_1])
-    for t2 in range(t, instance.numRequests+1):
-        if t != t2:
-            tours.append([t, t2])
-            machine_type_2 = instance.requests[t2][4]
-            machines_on_tour.append([machine_type_1, machine_type_2])
-
-# schedule 
-schedule = [["schedule"]]
-# give 1 day off for 4 days worked
-for i in range(0,5):
-    schedule.append([])
-    for j in range(1, instance.days+1):
-        if j % 5 - i != 0:
-            schedule[i+1].append(j)
-start = len(schedule)
-# give 2 days off for 5 days worked
-for i in range(0,7):
-    schedule.append([])
-    for j in range(1, instance.days+1):
-        if j % 7 != i and j % 7 != i+1:
-            schedule[start+i].append(j)
-        
-
-# function to solve IP for technicians
-def IP_Technicians():
-
-    # variable indicates if tour t includes machine m
-    b = {}
-    for t in range(1, len(tours)):
-        for m in range(1, instance.numRequests+1):
-            if m in tours[t]:
-                b[t,m] = 1
-            else:
-                b[t,m] = 0
-    
-    # variable indicates cost of person p completeing tour t
-    h = {}            
-    for p in range(1, instance.numTechnicians+1):
-        for t in range(1, len(tours)): 
-            h[p,t] = 0
-            # find the locations of the technician's start and each request m on the tour
-            technicianLocationID = instance.technicians[p][1]
-            tourLocationIDs = []
-            for m in tours[t]:
-                tourLocationIDs.append(instance.requests[m][1])
-            # add the $/unit of distance from technician start to first request 1
-            h[p,t] += instance.technicianDistanceCost * distance(technicianLocationID, tourLocationIDs[0])
-            # add cost of distance traveled for subsequent requests 
-            for i in range(1, len(tourLocationIDs)-1):
-                h[p,t] += instance.technicianDistanceCost * distance(tourLocationIDs[i-1], tourLocationIDs[i])
-            # add cost of techncian going back to their starting place
-            h[p,t] += instance.technicianDistanceCost * distance(tourLocationIDs[len(tourLocationIDs)-1], technicianLocationID)
-            h[p,t] += instance.technicianDayCost
-    
-    # variable indicates if schedule s contains day d
-    e = {}
-    for s in range(1, len(schedule)):
-        for d in range(1, instance.days+1):
-            if d in schedule[s]:
-                e[s,d] = 1
-            else:
-                e[s,d] = 0
-    
-    # variable indicates whether machine request m can be delivered on day d
-    l = {}
-    for m in range(1, instance.numRequests+1):
-        for d in range(1, instance.days+1):
-            # is the day greater than (after) the first day the request is released?
-            if d > instance.requests[m][2]: 
-                l[m,d] = 1
-            else:
-                l[m,d] = 0
-    
-    # gurobi model
-    model = Model()
-
-    # decision var person p performs tour t on day d
-    y = {}
-    for p in range(1, instance.numTechnicians + 1):
-        for t in range(1, len(tours)):
-            for d in range(1, instance.days + 1):
-                # Check if the tour distance is within the technician's limit
-                if tech_tour_distance(t, p) <= instance.technicians[p][2]:
-                    # Check if the technician can install all machines in the tour
-                    if all(instance.technicians[p][m+3] for m in machines_on_tour[t]): #need to fix this -- not sure how tours work
-                        y[p, t, d] = model.addVar(0, 1, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))
-                    else:
-                        y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))  # Set the decision variable to 0 if technician cannot install all machines
-                else:
-                    y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))  # Set the decision variable to 0 if the distance exceeds the limit
-
-
-    
-    # decision var person p has schedule s
-    z = {}
-    for p in range(1, instance.numTechnicians+1):
-        for s in range(1, len(schedule)):
-            z[p,s] = model.addVar(0, 1, 0, GRB.BINARY, "z_%d_%d" %(p,s))
-
-     # decision variable for total cost of person p
-    c = {}
-    for p in range(1, instance.numTechnicians+1):
-       c[p] = model.addVar(0, GRB.INFINITY, 1, GRB.CONTINUOUS, "c_%d"%p)
-    
-    # constraint that person costs the amount calculated
-    for p in range(1, instance.numTechnicians+1):
-         model.addConstr(quicksum(h[p,t] * y[p,t,d] for t in range(1, len(tours)) \
-                    for d in range(1, instance.days+1)) == c[p])
-    
-    # constraint each person can only work one schedule
-    for p in range(1, instance.numTechnicians+1):
-        model.addConstr(quicksum(z[p,s] for s in range(1, len(schedule))) == 1) 
-    
-    # constraint each person can only work days in their schedule
-    for d in range(1, instance.days+1):
-        for p in range(1, instance.numTechnicians+1):
-            model.addConstr(quicksum(y[p,t,d] for t in range(1, len(tours))) <= \
-                    quicksum(e[s,d]*z[p,s] for s in range(1, len(schedule))))
-    
-    # constraint every machine gets installed
-    for m in range(1, instance.numRequests+1):
-        model.addConstr(quicksum(b[t,m]*y[p,t,d] for t in range(1, len(tours)) for p in range(1, instance.numTechnicians+1) \
-                    for d in range(1, instance.days+1)) == 1) # exactly equal means can't go to request twice
-
-    # constraint machines can't be installed until after the request is released
-    for m in range(1, instance.numRequests+1):
-        for d in range(1, instance.days+1):
-            model.addConstr(quicksum(b[t,m]*y[p,t,d] for t in range(1, len(tours)) for p in range(1, instance.numTechnicians+1)) <=l[m,d])
-
-    #constraint for max requests for a technician
-    for p in range(1, instance.numTechnicians + 1):
-        for t in range(1, len(tours)):
-            for d in range(1, instance.days + 1):
-                model.addConstr(quicksum(b[t, m] * y[p, t, d] for m in tours[t]) <= instance.technicians[p][3])
-
-
-    model.setParam('OutputFlag', False)
-    model.optimize()
-
-     # create list to store y variable values 
-    solutions = [["technician", "tour", "day"]] 
-
-    if model.SolCount == 0:
-        print("***NO SOLUTION FOUND***")
-    else:
-        #parse decision vars and add to list
-        for v in model.getVars():
-            if v.X > 0 and 'y' in v.varName:
-                y,p,t,d = v.varName.split('_')
-                solutions.append([p, tours[int(t)], d])
-    
-    return solutions
-
-def distance(location1, location2):
-    x1 = instance.locations[location1][1]
-    y1 = instance.locations[location1][2]
-    x2 = instance.locations[location2][1]
-    y2 = instance.locations[location2][2]
-    return np.sqrt((x1-x2)**2 + (y1-y2)**2)
-
-#length of tour t performed by technician p
-def tech_tour_distance(t, p):
-    dist = 0
-    technicianLocationID = instance.technicians[p][1]
-    tourLocationIDs = []
-    for m in tours[t]:
-        tourLocationIDs.append(instance.requests[m][1])
-    # add the distance from technician start to first request 1
-    dist += distance(technicianLocationID, tourLocationIDs[0]) 
-    for i in range(1, len(tourLocationIDs)-1):
-        dist += distance(tourLocationIDs[i-1], tourLocationIDs[i])
-            # add distance of techncian going back to their starting place
-    dist += distance(tourLocationIDs[len(tourLocationIDs)-1], technicianLocationID)    
-    return dist
-
-# call techncian function
-technician_solutions = IP_Technicians()
 # print solution
 for i in range(1, len(technician_solutions)):
     print(f"Technician {technician_solutions[i][0]} performs tour {(technician_solutions[i][1])} on day {technician_solutions[i][2]}")
+for i in range(1, len(route_days)):
+    print(f"on day {route_days[i][0]} request {route_days[i][1]} is dropped off")
+for i in range(1, len(truck_days)):
+    print(f"day {truck_days[i][0]} there are {truck_days[i][1]} trucks")
+
+# create a dictionary to store number of techncians that work on certain days
+technician_days = {}
+for i in range(1, len(technician_solutions)):
+    if technician_solutions[i][2] not in technician_days:
+        technician_days[technician_solutions[i][2] ] = 1
+    else:
+        technician_days[technician_solutions[i][2] ] += 1
+
+# create output file 
+with open('solution01.txt', 'w') as file:
+    file.write(f"DATASET = {instance.dataset}\n")
+    file.write(f"NAME = {instance.name} \n")
+    for d in range(1,instance.days+1):
+        file.write("\n")
+        file.write(f"DAY = {d} \n")
+        file.write(f"NUMBER_OF_TRUCKS = {truck_days[d][1]} \n")
+        count = 1
+        for i in range(1, len(route_days)):
+            if int(route_days[i][0]) == d:
+                file.write(f"{count} {route_days[i][1]} \n")
+                count+=1
+        if f"{d}" not in technician_days:
+            file.write(f"NUMBER_OF_TECHNICIANS = {0} \n")
+        else:
+            file.write(f"NUMBER_OF_TECHNICIANS = {technician_days[f'{d}']} \n")
+            for i in range(1, len(technician_solutions)):
+                if d == int(technician_solutions[i][2]):
+                    file.write(f"{technician_solutions[i][0]} {' '.join(map(str, technician_solutions[i][1]))} \n")
+        
+        
+
