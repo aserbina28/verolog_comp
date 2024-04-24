@@ -15,9 +15,10 @@ instance.read_case_file(filename)
       
 # solve technician problem
 technician_solutions, machines = Technicians.IP_Technicians(instance)
+print(f"machines: {sorted(machines)}")
 
 # solve truck problem
-route_days, truck_days = Trucks2.IP_Trucks(instance, machines)
+route_days, truck_days = Trucks2.IP_Trucks(instance, sorted(machines))
 route_days[1:] = sorted(route_days[1:])
 
 # print solution

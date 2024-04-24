@@ -73,6 +73,7 @@ def IP_Trucks(instance, machines):
     for m in range(1, instance.numRequests+1):
         model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(1, instance.requests[m][2]) for r in range(1,len(routes)))==0)
         model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(machines[m-1][1], instance.days+1) for r in range(1,len(routes)))==0)
+        model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(instance.requests[m][3], instance.days+1) for r in range(1,len(routes)))==0)
     
 
     # assume capacity constarint met because routes only contain one request thus never exceed capacity
