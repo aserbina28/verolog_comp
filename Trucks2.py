@@ -42,7 +42,8 @@ def IP_Trucks(instance, machines):
     # decision var number idle days for machine request m
     w = {}
     for m in range(1, instance.numRequests+1):
-        w[m] = model.addVar(0, 30, 0, GRB.INTEGER, "w_%d"%m)
+        #TODO fix this to actually minizie based on idle days
+        w[m] = model.addVar(0, 30, 0, GRB.INTEGER, "w_%d"%m) 
     
     # decision var whether route r contains request m
     a = {}
