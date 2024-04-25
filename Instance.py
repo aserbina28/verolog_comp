@@ -81,3 +81,13 @@ class Instance(object):
                         for j in file.readline().strip().split():
                             self.technicians[i+1].append(int(j))
         file.close()
+
+
+class Technician(object):
+    def __init__(self, id, location_id, max_distance, max_installations, installation_ability):
+        self.id = id
+        self.location_id = location_id
+        self.max_distance = max_distance
+        self.max_installations = max_installations
+        self.installation_ability = installation_ability
+    

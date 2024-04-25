@@ -3,15 +3,32 @@
 import Instance
 import numpy as np
 
-# function to make list of tours for technicians with given instance
-def make_tours(instance):
-    tours = [["tours"]]
-    for t in range(1, instance.numRequests+1):
-        tours.append([t])
-        for t2 in range(t, instance.numRequests+1):
-            tours.append([t, t2])
-    
-    return tours
+instance = Instance.Instance()
+instance.read_case_file('instances_2024/CO_Case2408.txt' )
+
+# dictionary of jobs a technician can install based on their ability
+technician_jobs = {}
+for p in  range(1, instance.numTechnicians+1):
+    technician_jobs[p] = []
+    for m in range(1, instance.numRequests+1):
+        machine_type = instance.requests[m][4]
+        if instance.technicians[p][machine_type+3]:
+            technician_jobs[p].append(m)
+    print(f"technician {p} can install {technician_jobs[p]}")
+
+# dictionary(?) jobs a technician can install on each day
+day_technician_jobs = {}
+for p in  range(1, instance.numTechnicians+1):
+    for d in range(1, instance.days+1):
+        day_technician_jobs[p,d] = []
+        for m in technician_jobs[p]:
+            if d > int(instance.requests[m][2]): #DECIDE: should we also restrict by last day?
+                day_technician_jobs[p,d].append(m)
+        print(f"technician {p} can install {day_technician_jobs[p,d]} on day {d}")
+
+# TODO use distance and max installation restrictions to create possible tours 
+#      for each technician on each day
+
 
 # function to compute distance of tour for person
 def tour_distance(technician, tour, instance):
@@ -30,6 +47,7 @@ def tour_distance(technician, tour, instance):
     dist += distance(tourLocationIDs[len(tourLocationIDs)-1], technicianLocationID)
     return dist
 
+# function to compute distance between two locations
 def distance(location1, location2):
     x1 = instance.locations[location1][1]
     y1 = instance.locations[location1][2]
@@ -37,17 +55,4 @@ def distance(location1, location2):
     y2 = instance.locations[location2][2]
     return np.sqrt((x1-x2)**2 + (y1-y2)**2)
 
-# function to make list of schedules for technicians with given instance
-def make_schedule(instance):
-    schedule = [["schedule"]]
-    
-    for i in range(2, instance.days+1):
-        schedule.append([1])
-        for j in range(2, instance.days+1):
-            schedule[i].append(i)
-    return schedule
 
-
-# test
-instance = Instance.Instance()
-instance.read_case_file('instances_2024/CO_Case2404.txt' )
