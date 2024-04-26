@@ -113,9 +113,7 @@ def IP_Technicians(instance):
 
     available_requests = []
     for m in range(1, instance.numRequests+1):
-        machine_type = instance.requests[m][4]
-        for n in range(1, instance.requests[m][5]+1):
-            available_requests.append(m)
+        available_requests.append(m)
     print("Available requests: ", available_requests )
     # decision var person p performs tour t on day d
     y = {}
@@ -128,7 +126,8 @@ def IP_Technicians(instance):
                     if set(tour).issubset(set(tours[t])):
                         # Add decision variable only if the tour is possible for the technician on that day
                         y[p, t, d] = model.addVar(0, 1, 0, GRB.BINARY, f"y_{p}_{t}_{d}")
-
+                    else:
+                        y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, f"y_{p}_{t}_{d}")
 
     
     # decision var person p has schedule s
