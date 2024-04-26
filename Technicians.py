@@ -2,6 +2,7 @@
 
 import numpy as np
 from gurobipy import *
+from Tours import daily_tour
 
 
 # function to calculate distance
@@ -110,20 +111,23 @@ def IP_Technicians(instance):
     # gurobi model
     model = Model()
 
+    available_requests = []
+    for m in range(1, instance.numRequests+1):
+        machine_type = instance.requests[m][4]
+        for n in range(1, instance.requests[m][5]+1):
+            available_requests.append(m)
+    print("Available requests: ", available_requests )
     # decision var person p performs tour t on day d
     y = {}
     for p in range(1, instance.numTechnicians + 1):
         for t in range(1, len(tours)):
             for d in range(1, instance.days + 1):
-                # Check if the tour distance is within the technician's limit
-                if tech_tour_distance(t, p) <= instance.technicians[p][2]:
-                    # Check if the technician can install all machines in the tour
-                    if all(instance.technicians[p][m+3] for m in machines_on_tour[t]): #need to fix this -- not sure how tours work
-                        y[p, t, d] = model.addVar(0, 1, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))
-                    else:
-                        y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))  # Set the decision variable to 0 if technician cannot install all machines
-                else:
-                    y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))  # Set the decision variable to 0 if the distance exceeds the limit
+                # Use daily_tour function to get possible tours for the technician on the current day
+                possible_tours = daily_tour(p, d, instance, available_requests)
+                for tour in possible_tours:
+                    if set(tour).issubset(set(tours[t])):
+                        # Add decision variable only if the tour is possible for the technician on that day
+                        y[p, t, d] = model.addVar(0, 1, 0, GRB.BINARY, f"y_{p}_{t}_{d}")
 
 
     

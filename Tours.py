@@ -28,15 +28,10 @@ for p in  range(1, instance.numTechnicians+1):
                 day_technician_jobs[p,d].append(m)
         print(f"technician {p} can install {day_technician_jobs[p,d]} on day {d}")
 
-# TODO use distance and max installation restrictions to create possible tours 
-#      for each technician on each day
-
 
 available_requests = []
 for m in range(1, instance.numRequests+1):
     machine_type = instance.requests[m][4]
-    for n in range(1, instance.requests[m][5]+1):
-        available_requests.append(m)
 print("Available requests: ", available_requests )
 
 # function to compute distance of tour for person
@@ -64,6 +59,7 @@ def distance(location1, location2):
     y2 = instance.locations[location2][2]
     return np.sqrt((x1-x2)**2 + (y1-y2)**2)
 
+
 #function to find a possible list of tours for a given person on a given day choosing from available requests 
 def daily_tour(technician, day, instance, available_requests):
     daily_tours = []
@@ -74,14 +70,11 @@ def daily_tour(technician, day, instance, available_requests):
         machine_type = instance.requests[a][4]
         if instance.technicians[technician][machine_type+3]:
             if d > int(instance.requests[m][2]):
-                for n in range(1, instance.requests[a][5]+1):
-                    jobs_can_do_today.append(a) #finds the list of jobs a given technician can do today
     #all possible tours from available jobs
     tour_combinations = list(itertools.combinations(jobs_can_do_today, max_install))
     for tour in tour_combinations:
-        if tour_distance(technician, tour, instance) <=max_dist:
+        if tour_distance(technician, tour, instance) <= max_dist:
             daily_tours.append(tour)
-            print(max_dist, " ", tour_distance(technician, tour, instance))
-    
+    return daily_tours
 
 daily_tour(1, 2, instance, available_requests)
