@@ -68,7 +68,7 @@ def daily_tour(technician, day, instance, available_requests):
     for a in available_requests:
         machine_type = instance.requests[a][4]
         if instance.technicians[technician][machine_type+3]:
-            if d > int(instance.requests[m][2]):
+            if day > int(instance.requests[m][2]):
                 jobs_can_do_today.append(a) #finds the list of jobs a given technician can do today
     #all possible tours from available jobs
     tour_combinations = list(itertools.combinations(jobs_can_do_today, max_install))
