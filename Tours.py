@@ -5,7 +5,7 @@ import numpy as np
 import itertools
 
 instance = Instance.Instance()
-instance.read_case_file('instances_2024/CO_Case2401.txt' )
+instance.read_case_file('instances_2024/CO_Case2408.txt' )
 
 # dictionary of jobs a technician can install based on their ability
 technician_jobs = {}
@@ -27,12 +27,6 @@ for p in  range(1, instance.numTechnicians+1):
                 day_technician_jobs[p,d].append(m)
         print(f"technician {p} can install {day_technician_jobs[p,d]} on day {d}")
 
-
-available_requests = []
-for m in range(1, instance.numRequests+1):
-    available_requests.append(m)
-print("Available requests: ", available_requests )
-
 # function to compute distance of tour for person
 def tour_distance(technician, tour, instance):
     dist = 0
@@ -50,6 +44,18 @@ def tour_distance(technician, tour, instance):
     dist += distance(tourLocationIDs[len(tourLocationIDs)-1], technicianLocationID)
     return dist
 
+#shortest tour ignoring technician
+def tour_distance(tour, instance):
+    dist = 0
+    # find the locations of the technician's start and each request m on the tour
+    tourLocationIDs = []
+    for m in tour:
+        tourLocationIDs.append(instance.requests[m][1])
+    # add distance traveled for subsequent requests 
+    for i in range(1, len(tourLocationIDs)):
+        dist += distance(tourLocationIDs[i-1], tourLocationIDs[i])
+    return dist
+
 # function to compute distance between two locations
 def distance(location1, location2):
     x1 = instance.locations[location1][1]
@@ -58,23 +64,53 @@ def distance(location1, location2):
     y2 = instance.locations[location2][2]
     return np.sqrt((x1-x2)**2 + (y1-y2)**2)
 
+# TODO use distance and max installation restrictions to create possible tours 
+#      for each technician on each day
 
-#function to find a possible list of tours for a given person on a given day choosing from available requests 
-def daily_tour(technician, day, instance, available_requests):
-    daily_tours = []
-    max_dist = instance.technicians[technician][2]
-    max_install = instance.technicians[technician][3]
-    jobs_can_do_today = []
-    for a in available_requests:
-        machine_type = instance.requests[a][4]
-        if instance.technicians[technician][machine_type+3]:
-            if day > int(instance.requests[m][2]):
-                jobs_can_do_today.append(a) #finds the list of jobs a given technician can do today
-    #all possible tours from available jobs
-    tour_combinations = list(itertools.combinations(jobs_can_do_today, max_install))
-    for tour in tour_combinations:
-        if tour_distance(technician, tour, instance) <= max_dist:
-            daily_tours.append(tour)
-    return daily_tours
+import itertools
 
-daily_tour(1, 2, instance, available_requests)
+def feasible_tours(instance):
+    shortest_tours = {}
+    max_installations = 0
+    max_distance = 0
+    for p in range(1, instance.numTechnicians+1):
+        if instance.technicians[p][3] > max_installations:
+            max_installations = instance.technicians[p][3]
+        if instance.technicians[p][2] > max_distance:
+            max_distance = instance.technicians[p][2]
+    
+    tours = [[]]
+
+
+    machines_on_tour = [[]]  # Initialize dictionary to store machine types for each tour
+
+    max_installations = 6 # DELETE THIS 
+    
+    # Iterate over possible tour lengths
+    for length in range(1, max_installations + 1):
+        print("CURRENT LENGTH:", length)
+        # Generate all combinations of locations for the current length
+        for combination in itertools.combinations(range(1, instance.numRequests + 1), length):
+            # Generate all permutations of the current combination
+            for permutation in itertools.permutations(combination):
+                # Calculate the distance of the current tour
+                current_tour_distance = tour_distance(permutation, instance)
+                # Check if this combination of locations has been encountered before
+                key = tuple(sorted(permutation))
+                if key not in shortest_tours:
+                    # If not encountered before, add it to the shortest_tours dictionary
+                    shortest_tours[key] = current_tour_distance
+                else:
+                    # If encountered before, update the shortest distance if necessary
+                    shortest_tours[key] = min(shortest_tours[key], current_tour_distance)
+    
+    tours = tours + [[*tour] for tour in shortest_tours.keys() if tour_distance(tour, instance) < max_distance]
+    for tour in tours:
+        machines_on_tour.append([instance.requests[int(m)][4] for m in tour])
+    print(tours)
+
+    return tours, machines_on_tour  # Return both tours list and machines_on_tour dictionary
+
+
+
+feasible_tours(instance)
