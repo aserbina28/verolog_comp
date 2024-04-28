@@ -40,7 +40,7 @@ def IP_Trucks(instance, machines):
         dist = distance(instance, location_m, depot) * 2 # going there and back
         cost = dist * instance.truckDistanceCost
         routes.append([m, dist, cost])
-    routes = routes + generate_routes(instance) #routs of length 2
+        routes = routes + generate_routes(instance) #routs of length 2
 
     model = Model()
 
@@ -110,6 +110,8 @@ def IP_Trucks(instance, machines):
     model.setObjective(quicksum(f.values()) + truck_purchase_cost, GRB.MINIMIZE)
     model.setParam('OutputFlag', False)
     model.optimize()
+
+
 
 
     # create lists to store solutions
