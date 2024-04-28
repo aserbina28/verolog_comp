@@ -6,7 +6,7 @@ import Technicians
 
 
 # pass in file name of instance (hard code or command line)
-filename = 'instances_2024/CO_Case2401.txt' 
+filename = 'instances_2024/CO_Case2402.txt' 
 # filename = sys.argv[1]
 
 # create "instance" and read file
