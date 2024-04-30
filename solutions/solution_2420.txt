@@ -1,4 +1,0 @@
-DATASET = ORTEC Caroline VeRoLog 2019
-NAME = Instance 20 
-
-DAY = 1 
