@@ -39,8 +39,8 @@ def IP_Trucks(instance, machines):
         depot = 1
         dist = distance(instance, location_m, depot) * 2 # going there and back
         cost = dist * instance.truckDistanceCost
-        routes.append([m, dist, cost])
-        routes = routes + generate_routes(instance) #routs of length 2
+        routes.append([[m], dist, cost])
+        routes = routes + generate_routes(instance) #routes of length 2
 
     model = Model()
 
@@ -68,7 +68,7 @@ def IP_Trucks(instance, machines):
     a = {}
     for r in range(1, len(routes)):
         for m in range(1, instance.numRequests+1):
-            if routes[r][0] == m:
+            if m in routes[r][0]:
                 a[r,m] = model.addVar(1, 1, 0,  GRB.BINARY, "a_%d_%d" % (r,m)) 
             else:
                 a[r,m] = model.addVar(0, 0, 0,  GRB.BINARY, "a_%d_%d" % (r,m)) 
