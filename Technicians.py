@@ -105,7 +105,7 @@ def IP_Technicians(instance):
     for m in range(1, instance.numRequests+1):
         for d in range(1, instance.days+1):
             # is the day greater than (after) the first day the request is released?
-            if d > instance.requests[m][2]: 
+            if d > instance.requests[m][3]: 
                 l[m,d] = 1
             else:
                 l[m,d] = 0
@@ -140,6 +140,8 @@ def IP_Technicians(instance):
     c = {}
     for p in range(1, instance.numTechnicians+1):
        c[p] = model.addVar(0, GRB.INFINITY, 1, GRB.CONTINUOUS, "c_%d"%p)
+
+    
     
     # constraint that person costs the amount calculated
     for p in range(1, instance.numTechnicians+1):
