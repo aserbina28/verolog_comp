@@ -6,7 +6,7 @@ import Technicians
 
 
 # pass in file name of instance (hard code or command line)
-filename = 'instances_2024/CO_Case2402.txt' 
+filename = 'instances_2024/CO_Case2401.txt' 
 # filename = sys.argv[1]
 
 # create "instance" and read file
@@ -48,7 +48,10 @@ with open("solutions/solution_2401.txt", "w") as file:
         count = 1
         for i in range(1, len(route_days)):
             if int(route_days[i][0]) == d:
-                file.write(f"{count} {route_days[i][1]} \n")
+                file.write(f"{count} ")
+                for j in range(0,len(route_days[i][1])):
+                    file.write(f"{route_days[i][1][j]} ")
+                file.write(f"\n")
                 count+=1
         if f"{d}" not in technician_days:
             file.write(f"NUMBER_OF_TECHNICIANS = {0} \n")
