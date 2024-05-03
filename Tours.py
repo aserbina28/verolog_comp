@@ -84,7 +84,7 @@ def feasible_tours(instance):
 
     machines_on_tour = [[]]  # Initialize dictionary to store machine types for each tour
 
-    max_installations = 5 # DELETE THIS 
+    max_installations = 4 # DELETE THIS 
     
     # Iterate over possible tour lengths
     for length in range(1, max_installations + 1):

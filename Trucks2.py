@@ -17,7 +17,7 @@ def generate_routes(instance):
     routes = []
     locations = list(range(1, instance.numRequests + 1))
     
-    for length in range(1, 3):
+    for length in range(1, 5):
         for combination in itertools.combinations(locations, length):
             num_m = num_machines(combination, instance)
             if num_m <= instance.truckCapacity:
@@ -73,12 +73,6 @@ def IP_Trucks(instance, machines):
     f = {}
     for d in range(1, instance.days+1):
         f[d] = model.addVar(0, GRB.INFINITY, instance.truckDayCost, GRB.CONTINUOUS, "f_%d"%d)
-
-    # decision var number idle days for machine request m
-    w = {}
-    for m in range(1, instance.numRequests+1):
-        #TODO fix this to actually minizie based on idle days
-        w[m] = model.addVar(0, 30, 0, GRB.INTEGER, "w_%d"%m) 
     
     # decision var whether route r contains request m
     a = {}
@@ -89,18 +83,17 @@ def IP_Trucks(instance, machines):
             else:
                 a[r,m] = model.addVar(0, 0, 0,  GRB.BINARY, "a_%d_%d" % (r,m)) 
     
+    w = {}
+    for m in range(1, instance.numRequests+1):
+        #TODO fix this to actually minizie based on idle days
+        w[m] = model.addVar(0, 30, 0, GRB.INTEGER, "w_%d"%m) 
 
    # Decision variable representing the number of trucks purchased
-    num_trucks_purchased = model.addVar(0, GRB.INFINITY, name="num_trucks_purchased")
+    num_trucks_purchased = model.addVar(0, GRB.INFINITY, instance.truckCost, GRB.CONTINUOUS, name="num_trucks_purchased")
    
    # Add constraint for each day to ensure num_trucks_purchased is greater than or equal to f[d]
     for d in range(1, instance.days + 1):
         model.addConstr(num_trucks_purchased >= f[d], "num_trucks_constraint_%d_lower" % d)
-
-
-    # Add cost associated with purchasing trucks to the objective function
-    truck_purchase_cost = instance.truckCost * num_trucks_purchased
-   
 
     # constraint every request m is in one route r
     for m in range(1, instance.numRequests+1):
@@ -124,12 +117,9 @@ def IP_Trucks(instance, machines):
         model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(machines[m-1][1], instance.days+1) for r in range(1,len(routes)))==0)
         model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(instance.requests[m][3], instance.days+1) for r in range(1,len(routes)))==0)
 
-    model.setObjective(quicksum(f.values()) + truck_purchase_cost, GRB.MINIMIZE)
+    #model.setObjective(quicksum(f.values()) + truck_purchase_cost, GRB.MINIMIZE)
     model.setParam('OutputFlag', False)
     model.optimize()
-
-
-
 
     # create lists to store solutions
     route_days = [["day", "request"]]

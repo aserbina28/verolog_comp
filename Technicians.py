@@ -76,6 +76,7 @@ def IP_Technicians(instance):
             # add cost of techncian going back to their starting place
             h[p,t] += instance.technicianDistanceCost * distance(instance, tourLocationIDs[len(tourLocationIDs)-1], technicianLocationID)
             h[p,t] += instance.technicianDayCost
+            h[p,t] += instance.technicianCost
     
     # variable indicates if schedule s contains day d
     e = {}
@@ -107,14 +108,12 @@ def IP_Technicians(instance):
                 # Check if the tour distance is within the technician's limit
                 if tech_tour_distance(t, p) <= instance.technicians[p][2]:
                     # Check if the technician can install all machines in the tour
-                    if all(instance.technicians[p][m+3] for m in machines_on_tour[t]): #need to fix this -- not sure how tours work
+                    if all(instance.technicians[p][m+3] for m in machines_on_tour[t]):
                         y[p, t, d] = model.addVar(0, 1, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))
                     else:
                         y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))  # Set the decision variable to 0 if technician cannot install all machines
                 else:
                     y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))  # Set the decision variable to 0 if the distance exceeds the limit
-
-
     
     # decision var person p has schedule s
     z = {}
@@ -126,8 +125,6 @@ def IP_Technicians(instance):
     c = {}
     for p in range(1, instance.numTechnicians+1):
        c[p] = model.addVar(0, GRB.INFINITY, 1, GRB.CONTINUOUS, "c_%d"%p)
-
-    
     
     # constraint that person costs the amount calculated
     for p in range(1, instance.numTechnicians+1):
@@ -160,7 +157,7 @@ def IP_Technicians(instance):
             for d in range(1, instance.days + 1):
                 model.addConstr(quicksum(b[t, m] * y[p, t, d] for m in tours[t]) <= instance.technicians[p][3])
 
-
+    model.setObjective(quicksum(c[p] for p in range(1, instance.numTechnicians+1)), GRB.MINIMIZE)
     model.setParam('OutputFlag', False)
     model.optimize()
 
