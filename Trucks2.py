@@ -2,6 +2,7 @@
 
 import numpy as np
 from gurobipy import *
+import itertools
 
 depot = 1
 
@@ -14,34 +15,49 @@ def distance(instance, location1, location2):
 
 def generate_routes(instance):
     routes = []
-    locations = list(range(1, instance.numRequests + 1))  # Assuming locations are numbered
-    # Generate routes of length 2
-    for route in itertools.combinations(locations, 2):
-        dist = calculate_route_distance(instance, route)
-        cost = dist * instance.truckDistanceCost
-        routes.append([route, dist, cost])  # Append the route as a list to the routes list
+    locations = list(range(1, instance.numRequests + 1))
+    
+    for length in range(1, 3):
+        for combination in itertools.combinations(locations, length):
+            num_m = num_machines(combination, instance)
+            if num_m <= instance.truckCapacity:
+                shortest_dist = float('inf')
+                shortest_permutation = None
+                for permutation in itertools.permutations(combination):
+                    cur_dist = tour_distance(permutation, instance)
+                    if cur_dist < shortest_dist and cur_dist <= instance.truckMaxDistance:
+                        shortest_dist = cur_dist
+                        shortest_permutation = permutation
+                if shortest_permutation:
+                    routes.append((shortest_permutation, shortest_dist, shortest_dist * instance.truckDistanceCost))
+    print(routes)
     return routes
 
-def calculate_route_distance(instance, route):
-    location_1 = instance.requests[route[0]][1]
-    location_2 = instance.requests[route[1]][1]
-    dist = distance(instance, depot, location_1) +  distance(instance, location_1, location_2) + distance(instance, location_2, depot)
-    # Calculate the total distance for a given route
+def num_machines(tour, instance):
+    num = 0
+    for m in tour:
+        num += instance.requests[m][5] * instance.machines[instance.requests[m][4]][1]
+    return num
+
+def tour_distance(tour, instance):
+    dist = 0
+    depot = 1
+    tourLocationIDs = []
+    for m in tour:
+        tourLocationIDs.append(instance.requests[m][1])
+    # add the distance from technician start to first request 1
+    dist += distance(instance, depot, tourLocationIDs[0]) 
+    for i in range(1, len(tourLocationIDs)-1):
+        dist += distance(instance, tourLocationIDs[i-1], tourLocationIDs[i])
+            # add distance of techncian going back to their starting place
+    dist += distance(instance, tourLocationIDs[len(tourLocationIDs)-1], depot)    
     return dist
 
 def IP_Trucks(instance, machines):
 
     # create routes
     #routes = [["machine", "distance", "cost"]]
-    routes = [[]]
-    for m in range(1, instance.numRequests+1):
-        location_m = instance.requests[m][1]
-        depot = 1
-        dist = distance(instance, location_m, depot) * 2 # going there and back
-        cost = dist * instance.truckDistanceCost
-        routes.append([[m], dist, cost])
-        routes = routes + generate_routes(instance) #routes of length 2
-
+    routes = generate_routes(instance)
     model = Model()
 
     # decision var is route r performed on day d
@@ -72,12 +88,15 @@ def IP_Trucks(instance, machines):
                 a[r,m] = model.addVar(1, 1, 0,  GRB.BINARY, "a_%d_%d" % (r,m)) 
             else:
                 a[r,m] = model.addVar(0, 0, 0,  GRB.BINARY, "a_%d_%d" % (r,m)) 
+    
 
    # Decision variable representing the number of trucks purchased
     num_trucks_purchased = model.addVar(0, GRB.INFINITY, name="num_trucks_purchased")
+   
    # Add constraint for each day to ensure num_trucks_purchased is greater than or equal to f[d]
     for d in range(1, instance.days + 1):
-        model.addConstr(num_trucks_purchased >= f[d], "num_trucks_constraint_%d" % d)
+        model.addConstr(num_trucks_purchased >= f[d], "num_trucks_constraint_%d_lower" % d)
+
 
     # Add cost associated with purchasing trucks to the objective function
     truck_purchase_cost = instance.truckCost * num_trucks_purchased
@@ -104,8 +123,6 @@ def IP_Trucks(instance, machines):
         model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(1, instance.requests[m][2]) for r in range(1,len(routes)))==0)
         model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(machines[m-1][1], instance.days+1) for r in range(1,len(routes)))==0)
         model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(instance.requests[m][3], instance.days+1) for r in range(1,len(routes)))==0)
-    
-    # assume capacity constarint met because routes only contain one request thus never exceed capacity
 
     model.setObjective(quicksum(f.values()) + truck_purchase_cost, GRB.MINIMIZE)
     model.setParam('OutputFlag', False)

@@ -19,7 +19,7 @@ print(f"machines: {sorted(machines)}")
 
 # solve truck problem
 route_days, truck_days = Trucks2.IP_Trucks(instance, sorted(machines))
-route_days[1:] = sorted(route_days[1:])
+route_days[1:] = sorted(route_days[1:], key=lambda x: x[0])
 
 # print solution
 for i in range(1, len(technician_solutions)):

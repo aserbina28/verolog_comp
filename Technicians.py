@@ -17,20 +17,6 @@ def distance(instance, location1, location2):
 def IP_Technicians(instance):
 
     tours, machines_on_tour = feasible_tours(instance)
-    '''
-    tours = [["tours"]]
-    machines_on_tour = [["machines requested"]]
-    for t in range(1, instance.numRequests+1):
-        tours.append([t])
-        # machine type requested, add to list of machine types
-        machine_type_1 = instance.requests[t][4]
-        machines_on_tour.append([machine_type_1])
-        for t2 in range(t, instance.numRequests+1):
-            if t != t2:
-                tours.append([t, t2])
-                machine_type_2 = instance.requests[t2][4]
-                machines_on_tour.append([machine_type_1, machine_type_2])
-    '''
 
     # schedule 
     schedule = [["schedule"]]

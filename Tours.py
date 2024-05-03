@@ -5,7 +5,7 @@ import numpy as np
 import itertools
 
 instance = Instance.Instance()
-instance.read_case_file('instances_2024/CO_Case2408.txt' )
+instance.read_case_file('instances_2024/CO_Case2401.txt' )
 
 # dictionary of jobs a technician can install based on their ability
 technician_jobs = {}
@@ -84,7 +84,7 @@ def feasible_tours(instance):
 
     machines_on_tour = [[]]  # Initialize dictionary to store machine types for each tour
 
-    max_installations = 3 # DELETE THIS 
+    max_installations = 5 # DELETE THIS 
     
     # Iterate over possible tour lengths
     for length in range(1, max_installations + 1):
@@ -107,7 +107,6 @@ def feasible_tours(instance):
     tours = tours + [[*tour] for tour in shortest_tours.keys() if tour_distance(tour, instance) < max_distance]
     for tour in tours:
         machines_on_tour.append([instance.requests[int(m)][4] for m in tour])
-    print(tours)
 
     return tours, machines_on_tour  # Return both tours list and machines_on_tour dictionary
 
