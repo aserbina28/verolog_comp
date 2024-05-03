@@ -90,7 +90,7 @@ def IP_Technicians(instance):
     l = {}
     for m in range(1, instance.numRequests+1):
         for d in range(1, instance.days+1):
-            # is the day greater than (after) the first day the request is released?
+            # is the day greater than (after) the deadline -- this might need to be fixed
             if d > instance.requests[m][3]: 
                 l[m,d] = 1
             else:
