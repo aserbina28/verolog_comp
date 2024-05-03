@@ -76,7 +76,6 @@ def IP_Technicians(instance):
             # add cost of techncian going back to their starting place
             h[p,t] += instance.technicianDistanceCost * distance(instance, tourLocationIDs[len(tourLocationIDs)-1], technicianLocationID)
             h[p,t] += instance.technicianDayCost
-            h[p,t] += instance.technicianCost
     
     # variable indicates if schedule s contains day d
     e = {}
@@ -87,7 +86,7 @@ def IP_Technicians(instance):
             else:
                 e[s,d] = 0
     
-    # variable indicates whether machine request m can be delivered on day d
+    # variable indicates whether machine request m can be installed on day d
     l = {}
     for m in range(1, instance.numRequests+1):
         for d in range(1, instance.days+1):
@@ -114,7 +113,7 @@ def IP_Technicians(instance):
                         y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))  # Set the decision variable to 0 if technician cannot install all machines
                 else:
                     y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))  # Set the decision variable to 0 if the distance exceeds the limit
-    
+
     # decision var person p has schedule s
     z = {}
     for p in range(1, instance.numTechnicians+1):
@@ -157,7 +156,7 @@ def IP_Technicians(instance):
             for d in range(1, instance.days + 1):
                 model.addConstr(quicksum(b[t, m] * y[p, t, d] for m in tours[t]) <= instance.technicians[p][3])
 
-    model.setObjective(quicksum(c[p] for p in range(1, instance.numTechnicians+1)), GRB.MINIMIZE)
+    model.setObjective(quicksum(c[p] + instance.technicianCost for p in range(1, instance.numTechnicians+1)), GRB.MINIMIZE)
     model.setParam('OutputFlag', False)
     model.optimize()
 

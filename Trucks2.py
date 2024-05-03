@@ -88,6 +88,7 @@ def IP_Trucks(instance, machines):
         #TODO fix this to actually minizie based on idle days
         w[m] = model.addVar(0, 30, 0, GRB.INTEGER, "w_%d"%m) 
 
+
    # Decision variable representing the number of trucks purchased
     num_trucks_purchased = model.addVar(0, GRB.INFINITY, instance.truckCost, GRB.CONTINUOUS, name="num_trucks_purchased")
    
