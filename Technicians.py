@@ -3,7 +3,10 @@
 import numpy as np
 from gurobipy import *
 from Tours import feasible_tours
+<<<<<<< HEAD
 import math
+=======
+>>>>>>> c242e0e0efb61f3c5232fd517cee76ffbc93201e
 
 
 # function to calculate distance
@@ -12,7 +15,11 @@ def distance(instance, location1, location2):
     y1 = instance.locations[location1][2]
     x2 = instance.locations[location2][1]
     y2 = instance.locations[location2][2]
+<<<<<<< HEAD
     return math.ceil(math.sqrt(pow(x1-x2, 2) + pow(y1-y2, 2)))
+=======
+    return np.sqrt((x1-x2)**2 + (y1-y2)**2)
+>>>>>>> c242e0e0efb61f3c5232fd517cee76ffbc93201e
 
 # function to solve IP for technicians
 def IP_Technicians(instance):

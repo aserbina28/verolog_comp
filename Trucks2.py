@@ -3,7 +3,10 @@
 import numpy as np
 from gurobipy import *
 import itertools
+<<<<<<< HEAD
 import math
+=======
+>>>>>>> c242e0e0efb61f3c5232fd517cee76ffbc93201e
 
 depot = 1
 
@@ -12,7 +15,11 @@ def distance(instance, location1, location2):
     y1 = instance.locations[location1][2]
     x2 = instance.locations[location2][1]
     y2 = instance.locations[location2][2]
+<<<<<<< HEAD
     return math.ceil(math.sqrt(pow(x1-x2, 2) + pow(y1-y2, 2)))
+=======
+    return np.sqrt((x1-x2)**2 + (y1-y2)**2)
+>>>>>>> c242e0e0efb61f3c5232fd517cee76ffbc93201e
 
 def generate_routes(instance):
     routes = []
