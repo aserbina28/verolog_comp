@@ -48,10 +48,10 @@ def tour_distance(tour, instance):
         tourLocationIDs.append(instance.requests[m][1])
     # add the distance from technician start to first request 1
     dist += distance(instance, depot, tourLocationIDs[0]) 
-    for i in range(1, len(tourLocationIDs)-1):
+    for i in range(1, len(tourLocationIDs)):
         dist += distance(instance, tourLocationIDs[i-1], tourLocationIDs[i])
             # add distance of techncian going back to their starting place
-    dist += distance(instance, tourLocationIDs[len(tourLocationIDs)-1], depot)    
+    dist += distance(instance, tourLocationIDs[-1], depot)    
     return dist
 
 def IP_Trucks(instance, machines):

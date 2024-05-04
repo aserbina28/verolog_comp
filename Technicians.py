@@ -44,10 +44,10 @@ def IP_Technicians(instance):
             tourLocationIDs.append(instance.requests[m][1])
         # add the distance from technician start to first request 1
         dist += distance(instance, technicianLocationID, tourLocationIDs[0]) 
-        for i in range(1, len(tourLocationIDs)-1):
+        for i in range(1, len(tourLocationIDs)):
             dist += distance(instance, tourLocationIDs[i-1], tourLocationIDs[i])
                 # add distance of techncian going back to their starting place
-        dist += distance(instance, tourLocationIDs[len(tourLocationIDs)-1], technicianLocationID)    
+        dist += distance(instance, tourLocationIDs[-1], technicianLocationID)    
         return dist
 
     # variable indicates if tour t includes machine m
@@ -87,18 +87,19 @@ def IP_Technicians(instance):
             else:
                 e[s,d] = 0
     
+    # gurobi model
+    model = Model()
     # variable indicates whether machine request m can be installed on day d
     l = {}
     for m in range(1, instance.numRequests+1):
         for d in range(1, instance.days+1):
-            # is the day greater than (after) the deadline -- this might need to be fixed
-            if d > instance.requests[m][3]: 
-                l[m,d] = 1
+            # is the day greater than (after) the release date - changing this parameter leads to different results
+            if d > instance.requests[m][2]: 
+                l[m,d] = model.addVar(0, 1, 0, GRB.BINARY, "l_%d_%d" % (m, d))
             else:
-                l[m,d] = 0
+                l[m,d] = model.addVar(0, 0, 0, GRB.BINARY, "l_%d_%d" % (m, d))
 
-    # gurobi model
-    model = Model()
+    
 
     
     # decision var person p performs tour t on day d
