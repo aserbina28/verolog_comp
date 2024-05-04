@@ -213,4 +213,4 @@ def IP_Technicians(instance):
                 for r in tours[int(t)]:
                     machine_days.append([int(r), int(d)])
         print("Number of unique technicians hired:", num_unique_hired.X)    
-    return solutions, machine_days
+   
