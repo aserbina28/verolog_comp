@@ -3,7 +3,6 @@
 import Instance
 import numpy as np
 import itertools
-import math
 
 instance = Instance.Instance()
 instance.read_case_file('instances_2024/CO_Case2406.txt' )
@@ -63,7 +62,7 @@ def distance(location1, location2):
     y1 = instance.locations[location1][2]
     x2 = instance.locations[location2][1]
     y2 = instance.locations[location2][2]
-    return math.ceil(math.sqrt(pow(x1-x2, 2) + pow(y1-y2, 2)))
+    return np.sqrt((x1-x2)**2 + (y1-y2)**2)
 
 # TODO use distance and max installation restrictions to create possible tours 
 #      for each technician on each day
@@ -81,7 +80,6 @@ def feasible_tours(instance):
             max_distance = instance.technicians[p][2]
     
     tours = [[]]
-
 
     machines_on_tour = []  # Initialize dictionary to store machine types for each tour
 
@@ -108,6 +106,7 @@ def feasible_tours(instance):
     tours = tours + [[*tour] for tour in shortest_tours.keys() if tour_distance(tour, instance) < max_distance]
     for tour in tours:
         machines_on_tour.append([instance.requests[int(m)][4] for m in tour])
+
     return tours, machines_on_tour  # Return both tours list and machines_on_tour dictionary
 
 
