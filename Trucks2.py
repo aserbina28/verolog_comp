@@ -4,7 +4,6 @@ import numpy as np
 from gurobipy import *
 import itertools
 import math
-
 depot = 1
 
 def distance(instance, location1, location2):

@@ -6,7 +6,11 @@ import Technicians
 
 
 # pass in file name of instance (hard code or command line)
+<<<<<<< HEAD
 filename = 'instances_2024/CO_Case2406.txt' 
+=======
+filename = 'instances_2024/CO_Case2420.txt' 
+>>>>>>> 94c9a2ef874d0fd5090177ebedc4e17abf7b62da
 # filename = sys.argv[1]
 
 # create "instance" and read file
@@ -38,7 +42,11 @@ for i in range(1, len(technician_solutions)):
         technician_days[technician_solutions[i][2] ] += 1
 
 # create output file 
+<<<<<<< HEAD
 with open("solutions/solution_2406.txt", "w") as file:
+=======
+with open("solutions/solution_2420.txt", "w") as file:
+>>>>>>> 94c9a2ef874d0fd5090177ebedc4e17abf7b62da
     file.write(f"DATASET = {instance.dataset}\n")
     file.write(f"NAME = {instance.name} \n")
     for d in range(1,instance.days+1):

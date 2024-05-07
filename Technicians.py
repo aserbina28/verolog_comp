@@ -3,7 +3,15 @@
 import numpy as np
 from gurobipy import *
 from Tours import feasible_tours
+<<<<<<< HEAD
 import math
+=======
+<<<<<<< HEAD
+import math
+=======
+>>>>>>> c242e0e0efb61f3c5232fd517cee76ffbc93201e
+
+>>>>>>> 94c9a2ef874d0fd5090177ebedc4e17abf7b62da
 
 # function to calculate distance
 def distance(instance, location1, location2):
@@ -11,7 +19,15 @@ def distance(instance, location1, location2):
     y1 = instance.locations[location1][2]
     x2 = instance.locations[location2][1]
     y2 = instance.locations[location2][2]
+<<<<<<< HEAD
     return math.ceil(math.sqrt(pow(x1-x2, 2) + pow(y1-y2, 2)))
+=======
+<<<<<<< HEAD
+    return math.ceil(math.sqrt(pow(x1-x2, 2) + pow(y1-y2, 2)))
+=======
+    return np.sqrt((x1-x2)**2 + (y1-y2)**2)
+>>>>>>> c242e0e0efb61f3c5232fd517cee76ffbc93201e
+>>>>>>> 94c9a2ef874d0fd5090177ebedc4e17abf7b62da
 
 # function to solve IP for technicians
 def IP_Technicians(instance):
@@ -93,7 +109,11 @@ def IP_Technicians(instance):
     for m in range(1, instance.numRequests+1):
         for d in range(1, instance.days+1):
             # is the day greater than (after) the release date - changing this parameter leads to different results
+<<<<<<< HEAD
             if d > instance.requests[m][2]:
+=======
+            if d > instance.requests[m][2]: 
+>>>>>>> 94c9a2ef874d0fd5090177ebedc4e17abf7b62da
                 l[m,d] = model.addVar(0, 1, 0, GRB.BINARY, "l_%d_%d" % (m, d))
             else:
                 l[m,d] = model.addVar(0, 0, 0, GRB.BINARY, "l_%d_%d" % (m, d))

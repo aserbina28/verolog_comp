@@ -5,7 +5,11 @@ import numpy as np
 import itertools
 
 instance = Instance.Instance()
+<<<<<<< HEAD
 instance.read_case_file('instances_2024/CO_Case2406.txt' )
+=======
+instance.read_case_file('instances_2024/CO_Case2420.txt' )
+>>>>>>> 94c9a2ef874d0fd5090177ebedc4e17abf7b62da
 
 # dictionary of jobs a technician can install based on their ability
 technician_jobs = {}
@@ -81,7 +85,12 @@ def feasible_tours(instance):
     
     tours = [[]]
 
+<<<<<<< HEAD
     machines_on_tour = []  # Initialize dictionary to store machine types for each tour
+=======
+
+    machines_on_tour = [[]]  # Initialize dictionary to store machine types for each tour
+>>>>>>> 94c9a2ef874d0fd5090177ebedc4e17abf7b62da
 
     max_installations = 4 # DELETE THIS 
     
