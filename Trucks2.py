@@ -82,11 +82,12 @@ def IP_Trucks(instance, machines):
                 a[r,m] = model.addVar(1, 1, 0,  GRB.BINARY, "a_%d_%d" % (r,m)) 
             else:
                 a[r,m] = model.addVar(0, 0, 0,  GRB.BINARY, "a_%d_%d" % (r,m)) 
-    
+
+    #cost of idle days for machine m
     w = {}
     for m in range(1, instance.numRequests+1):
         #TODO fix this to actually minizie based on idle days
-        w[m] = model.addVar(0, 30, 0, GRB.INTEGER, "w_%d"%m) 
+        w[m] = model.addVar(0, 30, instance.machines[instance.requests[m][4]][2], GRB.INTEGER, "w_%d"%m) 
 
     # constraint every request m is in one route r
     for m in range(1, instance.numRequests+1):

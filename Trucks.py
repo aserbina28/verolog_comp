@@ -6,11 +6,7 @@ import Instance
 import numpy as np
 
 # pass in file name of instance (hard code or command line)
-<<<<<<< HEAD
 filename = 'instances_2024/CO_Case2402.txt'
-=======
-filename = 'instances_2024/CO_Case2420.txt'
->>>>>>> 94c9a2ef874d0fd5090177ebedc4e17abf7b62da
 # filename = sys.argv[1]
 
 # create "instance" and read file
