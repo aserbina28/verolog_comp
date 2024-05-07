@@ -5,7 +5,11 @@ import numpy as np
 import itertools
 
 instance = Instance.Instance()
+<<<<<<< HEAD
 instance.read_case_file('instances_2024/CO_Case2420.txt' )
+=======
+instance.read_case_file('instances_2024/CO_Case2401.txt' )
+>>>>>>> 9508f705ff4a54a2100a1edb89f1247f3944cab5
 
 # dictionary of jobs a technician can install based on their ability
 technician_jobs = {}

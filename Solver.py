@@ -5,8 +5,13 @@ import Trucks2
 import Technicians
 
 
+<<<<<<< HEAD
 # pass in file name of instance (hard code or command line)
 filename = 'instances_2024/CO_Case2420.txt' 
+=======
+# pass in file name of instance (hardcode or command line)
+filename = 'instances_2024/CO_Case2401.txt' 
+>>>>>>> 9508f705ff4a54a2100a1edb89f1247f3944cab5
 # filename = sys.argv[1]
 
 # create "instance" and read file
@@ -15,7 +20,6 @@ instance.read_case_file(filename)
       
 # solve technician problem
 technician_solutions, machines = Technicians.IP_Technicians(instance)
-print(f"machines: {sorted(machines)}")
 
 # solve truck problem
 route_days, truck_days = Trucks2.IP_Trucks(instance, sorted(machines))
@@ -38,7 +42,11 @@ for i in range(1, len(technician_solutions)):
         technician_days[technician_solutions[i][2] ] += 1
 
 # create output file 
+<<<<<<< HEAD
 with open("solutions/solution_2420.txt", "w") as file:
+=======
+with open("solutions/solution_2401.txt", "w") as file:
+>>>>>>> 9508f705ff4a54a2100a1edb89f1247f3944cab5
     file.write(f"DATASET = {instance.dataset}\n")
     file.write(f"NAME = {instance.name} \n")
     for d in range(1,instance.days+1):

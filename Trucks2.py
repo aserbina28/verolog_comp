@@ -74,7 +74,7 @@ def IP_Trucks(instance, machines):
     routes = generate_routes(instance)
     model = Model()
 
-    # decision var is route r performed on day d
+    # decision var is route r performed on day d by truck t
     x = {}
     for r in range(1,len(routes)):
         for d in range(1, instance.days+1):
