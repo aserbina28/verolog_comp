@@ -17,9 +17,9 @@ def generate_routes(instance):
     routes = [[]]
     locations = list(range(1, instance.numRequests + 1))
     
-    for length in range(1, 5):
+    for length in range(1, 7):
         for combination in itertools.combinations(locations, length):
-            num_m = num_machines(combination, instance)
+            num_m = num_machines(combination, instance) 
             if num_m <= instance.truckCapacity:
                 shortest_dist = float('inf')
                 shortest_permutation = None
@@ -31,7 +31,9 @@ def generate_routes(instance):
                 if shortest_permutation:
                     routes.append((shortest_permutation, shortest_dist, shortest_dist * instance.truckDistanceCost))
     print(routes)
+
     return routes
+
 
 def num_machines(tour, instance):
     num = 0
@@ -60,7 +62,7 @@ def IP_Trucks(instance, machines):
     routes = generate_routes(instance)
     model = Model()
 
-    # decision var is route r performed on day d
+    # decision var is route r performed on day d by truck t
     x = {}
     for r in range(1,len(routes)):
         for d in range(1, instance.days+1):
@@ -100,7 +102,7 @@ def IP_Trucks(instance, machines):
     # constraint for number of trucks on day d
     for d in range(1, instance.days +1):
         model.addConstr(quicksum(x[r,d] for r in range(1,len(routes))) == f[d])
-    
+     
     # constarint for idle days 
     for m in range(1, instance.numRequests+1):
         model.addConstr(machines[m-1][1] - quicksum(d*a[r,m]*x[r,d] for d in range(1, instance.days+1) for r in range(1,len(routes))) == w[m])
@@ -111,7 +113,7 @@ def IP_Trucks(instance, machines):
         model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(machines[m-1][1], instance.days+1) for r in range(1,len(routes)))==0)
         model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(instance.requests[m][3]+1, instance.days+1) for r in range(1,len(routes)))==0)
 
-    model.setObjective(n_trucks * instance.truckCost, GRB.MINIMIZE)
+    #model.setObjective(n_trucks * instance.truckCost, GRB.MINIMIZE)
     model.setParam('OutputFlag', False)
     model.optimize()
 
