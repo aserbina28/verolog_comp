@@ -18,7 +18,6 @@ def generate_routes(instance):
     locations = list(range(0, instance.numRequests + 1))
     
     for length in range(1, 6):
-        print("check")
         for combination in itertools.combinations(locations, length):
             # Check if 0 is at the beginning or end of the combination
             shortest_dist = float('inf')
@@ -132,6 +131,11 @@ def IP_Trucks(instance, machines):
     # create lists to store solutions
     route_days = [["day", "request"]]
     num_truck_days = [["num trucks", "day"]]
+
+    # vars to store total truck distance & idle day cost
+    total_truck_dist = 0
+    idle_costs = 0
+
     if model.SolCount == 0:
         print("***NO SOLUTION FOUND***")
     else:
@@ -143,17 +147,22 @@ def IP_Trucks(instance, machines):
                 dist = routes[int(r)][1]
                 cost = routes[int(r)][2]
                 route_days.append([int(d), request])
+                # add distance of route taken
+                total_truck_dist += dist
             if 'f' in v.varName:
                 f,d = v.varName.split('_')
                 num_truck_days.append([int(d), int(v.X)])
+            if 'w' in v.varName:
+                w,m = v.varName.split('_')
+                idle_costs += v.X * v.obj 
     
     all_vars = model.getVars()
     values = model.getAttr("X", all_vars)
     names = model.getAttr("VarName", all_vars)
 
-    for name, val in zip(names, values):
-        print(f"{name} = {val}")
+    # for name, val in zip(names, values):
+    #     print(f"{name} = {val}")
 
-    return route_days, num_truck_days
+    return route_days, num_truck_days, total_truck_dist, int(idle_costs), model.objval
 
 

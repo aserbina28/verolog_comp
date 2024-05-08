@@ -3,8 +3,8 @@
 import numpy as np
 from gurobipy import *
 from Tours import feasible_tours
-
 import math
+
 # function to calculate distance
 def distance(instance, location1, location2):
     x1 = instance.locations[location1][1]
@@ -12,9 +12,11 @@ def distance(instance, location1, location2):
     x2 = instance.locations[location2][1]
     y2 = instance.locations[location2][2]
     return math.ceil(math.sqrt(pow(x1-x2, 2) + pow(y1-y2, 2)))
+
 # function to solve IP for technicians
 def IP_Technicians(instance):
 
+    # create tours
     tours, machines_on_tour = feasible_tours(instance)
 
     # schedule 
@@ -87,6 +89,7 @@ def IP_Technicians(instance):
     
     # gurobi model
     model = Model()
+
     # variable indicates whether machine request m can be installed on day d
     l = {}
     for m in range(1, instance.numRequests+1):
@@ -100,7 +103,6 @@ def IP_Technicians(instance):
     
     # decision var person p performs tour t on day d
     y = {}
-    
     for p in range(1, instance.numTechnicians + 1):
         for t in range(1, len(tours)):
             for d in range(1, instance.days + 1):
@@ -198,20 +200,19 @@ def IP_Technicians(instance):
 
 
     # Objective: Minimize the total cost multiplied by the number of unique technicians hired
-    #model.setObjective(total_cost + num_unique_hired*instance.technicianCost, GRB.MINIMIZE)
-    model.setObjective(total_cost + num_unique_hired*instance.technicianCost+quicksum(w[m]*instance.machines[instance.requests[m][4]][2]*instance.requests[m][5] for m in range(1, instance.numRequests+1)), GRB.MINIMIZE)
+    model.setObjective(total_cost + num_unique_hired*instance.technicianCost, GRB.MINIMIZE)
+    #model.setObjective(total_cost + num_unique_hired*instance.technicianCost+quicksum(w[m]*instance.machines[instance.requests[m][4]][2]*instance.requests[m][5] for m in range(1, instance.numRequests+1)), GRB.MINIMIZE)
     #model.setObjective(quicksum(w[m]for m in range(1, instance.numRequests+1)))
     model.setParam('OutputFlag', False)
     model.optimize()
-
-    for p in range(1, instance.numTechnicians + 1):
-        print(f"Technician {p} hired overall: {hired_overall[p].X}")
-    print(hired_overall)
 
      # create list to store y variable values 
     solutions = [["technician", "tour", "day"]] 
     machine_days = [] # stores pair with [machine request, day]
     
+    # create var for technician dist
+    technician_dist = 0
+
     if model.SolCount == 0:
         print("***NO SOLUTION FOUND***")
     else:
@@ -222,13 +223,13 @@ def IP_Technicians(instance):
                 solutions.append([p, tours[int(t)], d])
                 for r in tours[int(t)]:
                     machine_days.append([int(r), int(d)])
-        print("Number of unique technicians hired:", num_unique_hired.X)
+                technician_dist += tech_tour_distance(int(t), int(p))
 
     all_vars = model.getVars()
     values = model.getAttr("X", all_vars)
     names = model.getAttr("VarName", all_vars)
 
-    for name, val in zip(names, values):
-        print(f"{name} = {val}")
+    # for name, val in zip(names, values):
+    #     print(f"{name} = {val}")
 
-    return solutions, machine_days
+    return solutions, machine_days, technician_dist, model.objval
