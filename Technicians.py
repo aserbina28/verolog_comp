@@ -70,7 +70,7 @@ def IP_Technicians(instance):
             # add the $/unit of distance from technician start to first request 1
             h[p,t] += instance.technicianDistanceCost * distance(instance, technicianLocationID, tourLocationIDs[0])
             # add cost of distance traveled for subsequent requests 
-            for i in range(1, len(tourLocationIDs)-1):
+            for i in range(1, len(tourLocationIDs)):
                 h[p,t] += instance.technicianDistanceCost * distance(instance, tourLocationIDs[i-1], tourLocationIDs[i])
             # add cost of techncian going back to their starting place
             h[p,t] += instance.technicianDistanceCost * distance(instance, tourLocationIDs[len(tourLocationIDs)-1], technicianLocationID)
@@ -92,7 +92,7 @@ def IP_Technicians(instance):
     for m in range(1, instance.numRequests+1):
         for d in range(1, instance.days+1):
             # is the day greater than (after) the release date - changing this parameter leads to different results
-            if d > instance.requests[m][2]:
+            if d > instance.requests[m][3]-1:
                 l[m,d] = model.addVar(0, 1, 0, GRB.BINARY, "l_%d_%d" % (m, d))
             else:
                 l[m,d] = model.addVar(0, 0, 0, GRB.BINARY, "l_%d_%d" % (m, d))
@@ -186,8 +186,21 @@ def IP_Technicians(instance):
     # Constraint: Compute the total cost for all technicians
     model.addConstr(total_cost == quicksum(c[p] for p in range(1, instance.numTechnicians + 1)))
 
+     # # Decision variable certain idle days
+    w = {}
+    for m in range(1, instance.numRequests+1):
+        w[m] = model.addVar(0, GRB.INFINITY, vtype= GRB.INTEGER, name = "w_%d"%m)
+
+     # Constraint: certain idle days
+    for m in range(1, instance.numRequests+1):
+        model.addConstr(quicksum(d*b[t,m]*y[p,t,d] for d in range(1, instance.days+1) for t in range(1,len(tours)) for p in range(1, instance.numTechnicians + 1))-1 - instance.requests[m][3] <= w[m])
+    
+
+
     # Objective: Minimize the total cost multiplied by the number of unique technicians hired
-    model.setObjective(total_cost + num_unique_hired*instance.technicianCost, GRB.MINIMIZE)
+    #model.setObjective(total_cost + num_unique_hired*instance.technicianCost, GRB.MINIMIZE)
+    model.setObjective(total_cost + num_unique_hired*instance.technicianCost+quicksum(w[m]*instance.machines[instance.requests[m][4]][2]*instance.requests[m][5] for m in range(1, instance.numRequests+1)), GRB.MINIMIZE)
+    #model.setObjective(quicksum(w[m]for m in range(1, instance.numRequests+1)))
     model.setParam('OutputFlag', False)
     model.optimize()
 
@@ -209,5 +222,13 @@ def IP_Technicians(instance):
                 solutions.append([p, tours[int(t)], d])
                 for r in tours[int(t)]:
                     machine_days.append([int(r), int(d)])
-        print("Number of unique technicians hired:", num_unique_hired.X)    
+        print("Number of unique technicians hired:", num_unique_hired.X)
+
+    all_vars = model.getVars()
+    values = model.getAttr("X", all_vars)
+    names = model.getAttr("VarName", all_vars)
+
+    for name, val in zip(names, values):
+        print(f"{name} = {val}")
+
     return solutions, machine_days

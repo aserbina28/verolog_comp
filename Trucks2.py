@@ -100,8 +100,7 @@ def IP_Trucks(instance, machines):
     #cost of idle days for machine m
     w = {}
     for m in range(1, instance.numRequests+1):
-        #TODO fix this to actually minizie based on idle days
-        w[m] = model.addVar(0, 30, instance.machines[instance.requests[m][4]][2], GRB.INTEGER, "w_%d"%m) 
+        w[m] = model.addVar(0, 30, instance.machines[instance.requests[m][4]][2]*instance.requests[m][5], GRB.INTEGER, "w_%d"%m) 
 
     # constraint every request m is in one route r
     for m in range(1, instance.numRequests+1):
@@ -117,7 +116,7 @@ def IP_Trucks(instance, machines):
     
     # constarint for idle days 
     for m in range(1, instance.numRequests+1):
-        model.addConstr(machines[m-1][1] - quicksum(d*a[r,m]*x[r,d] for d in range(1, instance.days+1) for r in range(1,len(routes))) == w[m])
+        model.addConstr(machines[m-1][1]-1 - quicksum(d*a[r,m]*x[r,d] for d in range(1, instance.days+1) for r in range(1,len(routes))) == w[m])
     
     # constraint for earliest delivery and latest delivery (depending on technician schedule)
     for m in range(1, instance.numRequests+1):
@@ -127,6 +126,7 @@ def IP_Trucks(instance, machines):
 
     #model.setObjective(quicksum(f[d] for d in range(1, instance.days+1)), GRB.MINIMIZE)
     model.setParam('OutputFlag', False)
+    #model.setObjective(quicksum(w[m]for m in range(1, instance.numRequests+1)),GRB.MINIMIZE)
     model.optimize()
 
     # create lists to store solutions
@@ -147,6 +147,12 @@ def IP_Trucks(instance, machines):
                 f,d = v.varName.split('_')
                 num_truck_days.append([int(d), int(v.X)])
     
+    all_vars = model.getVars()
+    values = model.getAttr("X", all_vars)
+    names = model.getAttr("VarName", all_vars)
+
+    for name, val in zip(names, values):
+        print(f"{name} = {val}")
 
     return route_days, num_truck_days
 
