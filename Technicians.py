@@ -200,9 +200,12 @@ def IP_Technicians(instance):
 
 
     # Objective: Minimize the total cost multiplied by the number of unique technicians hired
-    model.setObjective(total_cost + num_unique_hired*instance.technicianCost, GRB.MINIMIZE)
+    #model.setObjective(total_cost + num_unique_hired*instance.technicianCost, GRB.MINIMIZE)
     #model.setObjective(total_cost + num_unique_hired*instance.technicianCost+quicksum(w[m]*instance.machines[instance.requests[m][4]][2]*instance.requests[m][5] for m in range(1, instance.numRequests+1)), GRB.MINIMIZE)
     #model.setObjective(quicksum(w[m]for m in range(1, instance.numRequests+1)))
+    #This version gives the best across (1-10) (slight performance dip but major improvement in 4,5)
+    #Maybe loop with different objectives to generalize
+    model.setObjective(total_cost + num_unique_hired * instance.technicianCost + quicksum(w[m] for m in range(1, instance.numRequests + 1)), GRB.MINIMIZE)
     model.setParam('OutputFlag', False)
     model.optimize()
 

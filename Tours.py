@@ -2,6 +2,7 @@
 
 import numpy as np
 import itertools
+import Instance
 
 #shortest tour ignoring technician
 def tour_distance(tour, instance):
@@ -23,6 +24,14 @@ def distance(location1, location2, instance):
     y2 = instance.locations[location2][2]
     return np.sqrt((x1-x2)**2 + (y1-y2)**2)
 
+def tech_distance(tour, instance):
+    tech_tour_dist = 0
+    for i in range(1, instance.numTechnicians+1):
+        tech_tour_dist = distance(instance.locations[instance.requests[tour[0]][1]][0], instance.locations[instance.technicians[i][1]][0], instance) + tour_distance(tour,instance) + distance(instance.locations[instance.requests[tour[-1]][1]][0], instance.locations[instance.technicians[i][1]][0], instance)
+        if tech_tour_dist <= instance.technicians[i][2]:
+            return True
+    return False
+
 def feasible_tours(instance):
     shortest_tours = {}
     max_installations = 0
@@ -37,7 +46,7 @@ def feasible_tours(instance):
 
     machines_on_tour = []  # Initialize dictionary to store machine types for each tour
 
-    max_installations = 5 # DELETE THIS 
+    max_installations = 5# DELETE THIS
     
     # Iterate over possible tour lengths
     for length in range(1, max_installations + 1):
@@ -56,8 +65,10 @@ def feasible_tours(instance):
                     # If encountered before, update the shortest distance if necessary
                     shortest_tours[key] = min(shortest_tours[key], current_tour_distance)
     
-    tours = tours + [[*tour] for tour in shortest_tours.keys() if tour_distance(tour, instance) < max_distance]
+    tours = tours + [[*tour] for tour in shortest_tours.keys() if tech_distance(tour, instance)] # modified this
+
     for tour in tours:
         machines_on_tour.append([instance.requests[int(m)][4] for m in tour])
 
     return tours, machines_on_tour  # Return both tours list and machines_on_tour dictionary
+
