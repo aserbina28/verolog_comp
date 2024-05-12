@@ -232,7 +232,8 @@ def IP_Technicians(instance):
     values = model.getAttr("X", all_vars)
     names = model.getAttr("VarName", all_vars)
 
+    adjusted_obj_val = model.objval - sum(w[m].X for m in range(1, instance.numRequests + 1))
     # for name, val in zip(names, values):
     #     print(f"{name} = {val}")
 
-    return solutions, machine_days, technician_dist, model.objval
+    return solutions, machine_days, technician_dist, adjusted_obj_val
