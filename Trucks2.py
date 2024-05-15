@@ -123,9 +123,7 @@ def IP_Trucks(instance, machines):
         model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(machines[m-1][1], instance.days+1) for r in range(1,len(routes)))==0)
         model.addConstr(quicksum(a[r,m]*x[r,d] for d in range(instance.requests[m][3]+1, instance.days+1) for r in range(1,len(routes)))==0)
 
-    #model.setObjective(quicksum(f[d] for d in range(1, instance.days+1)), GRB.MINIMIZE)
     model.setParam('OutputFlag', False)
-    #model.setObjective(quicksum(w[m]for m in range(1, instance.numRequests+1)),GRB.MINIMIZE)
     model.optimize()
 
     # create lists to store solutions
