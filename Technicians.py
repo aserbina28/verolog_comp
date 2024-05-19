@@ -95,12 +95,12 @@ def IP_Technicians(instance):
     for m in range(1, instance.numRequests+1):
         for d in range(1, instance.days+1):
             # is the day greater than (after) the release date - changing this parameter leads to different results
-            if d > instance.requests[m][3]-1:
+            if d > instance.requests[m][2]:
                 l[m,d] = model.addVar(0, 1, 0, GRB.BINARY, "l_%d_%d" % (m, d))
             else:
                 l[m,d] = model.addVar(0, 0, 0, GRB.BINARY, "l_%d_%d" % (m, d))
 
-    
+
     # decision var person p performs tour t on day d
     y = {}
     for p in range(1, instance.numTechnicians + 1):
@@ -201,11 +201,12 @@ def IP_Technicians(instance):
 
     # Objective: Minimize the total cost multiplied by the number of unique technicians hired
     #model.setObjective(total_cost + num_unique_hired*instance.technicianCost, GRB.MINIMIZE)
-    model.setObjective(total_cost + num_unique_hired*instance.technicianCost+quicksum(w[m]*instance.machines[instance.requests[m][4]][2]*instance.requests[m][5] for m in range(1, instance.numRequests+1)), GRB.MINIMIZE)
     #model.setObjective(quicksum(w[m]for m in range(1, instance.numRequests+1)))
     #This version gives the best across (1-10) (slight performance dip but major improvement in 4,5)
     #Maybe loop with different objectives to generalize
     #model.setObjective(total_cost + num_unique_hired * instance.technicianCost + quicksum(w[m] for m in range(1, instance.numRequests + 1)), GRB.MINIMIZE)
+    model.setObjective(total_cost + num_unique_hired * instance.technicianCost + quicksum(w[m] * instance.machines[instance.requests[m][4]][2] * instance.requests[m][5] for m in range(1, instance.numRequests + 1)), GRB.MINIMIZE)
+
     model.setParam('OutputFlag', False)
     model.optimize()
 
@@ -233,6 +234,7 @@ def IP_Technicians(instance):
     names = model.getAttr("VarName", all_vars)
 
     adjusted_obj_val = model.objval - sum(w[m].X*instance.machines[instance.requests[m][4]][2]*instance.requests[m][5] for m in range(1, instance.numRequests + 1))
+    #adjusted_obj_val = model.objval - sum(w[m].X for m in range(1, instance.numRequests + 1))
     # for name, val in zip(names, values):
     #     print(f"{name} = {val}")
 
