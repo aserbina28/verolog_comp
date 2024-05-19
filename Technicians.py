@@ -86,9 +86,6 @@ def IP_Technicians(instance):
                 e[s,d] = 1
             else:
                 e[s,d] = 0
-    
-    # gurobi model
-    model = Model()
 
     # variable indicates whether machine request m can be installed on day d
     l = {}
@@ -96,11 +93,13 @@ def IP_Technicians(instance):
         for d in range(1, instance.days+1):
             # is the day greater than (after) the release date - changing this parameter leads to different results
             if d > instance.requests[m][2]:
-                l[m,d] = model.addVar(0, 1, 0, GRB.BINARY, "l_%d_%d" % (m, d))
+                l[m,d] = 1
             else:
-                l[m,d] = model.addVar(0, 0, 0, GRB.BINARY, "l_%d_%d" % (m, d))
+                l[m,d] = 0
 
-
+    # gurobi model
+    model = Model()
+    
     # decision var person p performs tour t on day d
     y = {}
     for p in range(1, instance.numTechnicians + 1):
@@ -116,15 +115,6 @@ def IP_Technicians(instance):
                 else:
                     y[p, t, d] = model.addVar(0, 0, 0, GRB.BINARY, "y_%d_%d_%d" % (p, t, d))  # Set the decision variable to 0 if the distance exceeds the limit
 
-    hired = {}
-    for p in range(1, instance.numTechnicians + 1):
-        for d in range(1, instance.days + 1):
-            hired[p, d] = model.addVar(vtype=GRB.BINARY, name=f"hired_{p}_{d}")
-
-    for p in range(1, instance.numTechnicians + 1):
-        for d in range(1, instance.days + 1):
-            model.addConstr(hired[p, d] == quicksum(y[p, t, d] for t in range(1, len(tours))))
-
     # decision var person p has schedule s
     z = {}
     for p in range(1, instance.numTechnicians+1):
@@ -135,7 +125,12 @@ def IP_Technicians(instance):
     c = {}
     for p in range(1, instance.numTechnicians+1):
        c[p] = model.addVar(0, GRB.INFINITY, 1, GRB.CONTINUOUS, "c_%d"%p)
-    
+
+    # decision variable certain idle days
+    w = {}
+    for m in range(1, instance.numRequests+1):
+        w[m] = model.addVar(0, GRB.INFINITY, 1, GRB.INTEGER, name = "w_%d"%m)
+
     # constraint that person costs the amount calculated
     for p in range(1, instance.numTechnicians+1):
          model.addConstr(quicksum(h[p,t] * y[p,t,d] for t in range(1, len(tours)) \
@@ -161,52 +156,37 @@ def IP_Technicians(instance):
         for d in range(1, instance.days+1):
             model.addConstr(quicksum(b[t,m]*y[p,t,d] for t in range(1, len(tours)) for p in range(1, instance.numTechnicians+1)) <=l[m,d])
 
-    #constraint for max requests for a technician
+    # constraint for max requests for a technician
     for p in range(1, instance.numTechnicians + 1):
         for t in range(1, len(tours)):
             for d in range(1, instance.days + 1):
                 model.addConstr(quicksum(b[t, m] * y[p, t, d] for m in tours[t]) <= instance.technicians[p][3])
 
-    # Decision variable representing whether technician p is hired at all during the planning horizon
-    hired_overall = {}
-    for p in range(1, instance.numTechnicians + 1):
-        hired_overall[p] = model.addVar(0, 1, vtype = GRB.BINARY, name=f"hired_overall_{p}")
-
-    # Constraint: If technician p is hired on any day, set hired_overall[p] to 1
-    for p in range(1, instance.numTechnicians + 1):
-        model.addConstr(hired_overall[p]>= quicksum(hired[p, d] for d in range(1, instance.days + 1))/d)
-
-    # Decision variable representing the total number of unique technicians hired
-    num_unique_hired = model.addVar(vtype=GRB.INTEGER, name="num_unique_hired")
-
-    # Constraint: num_unique_hired equals the sum of hired_overall[p] for all technicians
-    model.addConstr(num_unique_hired == quicksum(hired_overall[p] for p in range(1, instance.numTechnicians + 1)))
-    
-    # Decision variable representing the total cost for all technicians
-    total_cost = model.addVar(0, GRB.INFINITY, 1, GRB.CONTINUOUS, "total_cost")
-
-    # Constraint: Compute the total cost for all technicians
-    model.addConstr(total_cost == quicksum(c[p] for p in range(1, instance.numTechnicians + 1)))
-
-     # # Decision variable certain idle days
-    w = {}
-    for m in range(1, instance.numRequests+1):
-        w[m] = model.addVar(0, GRB.INFINITY, vtype= GRB.INTEGER, name = "w_%d"%m)
-
-     # Constraint: certain idle days
+    # constarint for certain idle days
     for m in range(1, instance.numRequests+1):
         model.addConstr(quicksum(d*b[t,m]*y[p,t,d] for d in range(1, instance.days+1) for t in range(1,len(tours)) for p in range(1, instance.numTechnicians + 1))-1 - instance.requests[m][3] <= w[m])
     
+    # variable indicating number of techncians hired each day
+    hired = {}
+    for p in range(1, instance.numTechnicians + 1):
+        for d in range(1, instance.days + 1):
+            hired[p, d] = quicksum(y[p, t, d] for t in range(1, len(tours)))
+
+    # variable representing whether technician p is hired at all during the planning horizon
+    hired_overall = {}
+    for p in range(1, instance.numTechnicians + 1):
+        hired_overall[p] = quicksum(hired[p, d] for d in range(1, instance.days + 1))/d
+
+    # variable representing the total number of unique technicians hired
+    num_unique_hired = quicksum(hired_overall[p] for p in range(1, instance.numTechnicians + 1))
+    
+    # variable representing the total cost for all technicians
+    total_cost = quicksum(c[p] for p in range(1, instance.numTechnicians + 1))
 
 
-    # Objective: Minimize the total cost multiplied by the number of unique technicians hired
-    #model.setObjective(total_cost + num_unique_hired*instance.technicianCost, GRB.MINIMIZE)
-    #model.setObjective(quicksum(w[m]for m in range(1, instance.numRequests+1)))
-    #This version gives the best across (1-10) (slight performance dip but major improvement in 4,5)
-    #Maybe loop with different objectives to generalize
-    #model.setObjective(total_cost + num_unique_hired * instance.technicianCost + quicksum(w[m] for m in range(1, instance.numRequests + 1)), GRB.MINIMIZE)
-    model.setObjective(total_cost + num_unique_hired * instance.technicianCost + quicksum(w[m] * instance.machines[instance.requests[m][4]][2] * instance.requests[m][5] for m in range(1, instance.numRequests + 1)), GRB.MINIMIZE)
 
+    # Objective: Minimize the total cost multiplied by the number of unique technicians hired, factor in idle costs
+    model.setObjective(total_cost + num_unique_hired*instance.technicianCost+quicksum(w[m]*instance.machines[instance.requests[m][4]][2]*instance.requests[m][5] for m in range(1, instance.numRequests+1)), GRB.MINIMIZE)
     model.setParam('OutputFlag', False)
     model.optimize()
 
@@ -234,7 +214,6 @@ def IP_Technicians(instance):
     names = model.getAttr("VarName", all_vars)
 
     adjusted_obj_val = model.objval - sum(w[m].X*instance.machines[instance.requests[m][4]][2]*instance.requests[m][5] for m in range(1, instance.numRequests + 1))
-    #adjusted_obj_val = model.objval - sum(w[m].X for m in range(1, instance.numRequests + 1))
     # for name, val in zip(names, values):
     #     print(f"{name} = {val}")
 
